@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-sand: #EFE3D0; /* beach sand */
+  --color-ocean: #0D3B3B; /* deep teal blue */
+  --color-wave: #1D3C45; /* softer ocean tone */
+  --color-coral: #FF8C5A; /* sunset coral accent */
+  --color-foam: #FFFFFF; /* white foam */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-sand);
+  color: var(--color-ocean);
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+}
+
+/* Headings */
+h1, h2, h3 {
+  font-family: "Playfair Display", serif;
+  color: var(--color-ocean);
+}
+
+/* Cards */
+.card {
+  background-color: color-mix(in srgb, var(--color-foam) 90%, transparent);
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-ocean) 10%, transparent);
+  box-shadow: 0 4px 8px color-mix(in srgb, var(--color-ocean) 8%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--color-ocean);
+}
+
+/* Accent links */
+a {
+  color: var(--color-coral);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-wave);
 }

@@ -5,13 +5,16 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { WebcamCard } from "@/components/WebcamCard";
 import { WebcamEmbed } from "@/components/WebcamEmbed";
 import { YouTubeEmbed } from "@/components/YoutubeEmbed";
+import { WindMap } from "@/components/WindMap";
 
 import HlsPlayer from "@/components/HlsPlayer";
-import { stations } from "@/lib/sources";
+import { locations } from "@/lib/sources";
+import { WindyEmbed } from "@/components/WindyEmbed";
 
 export default function Page() {
-  const [selectedStation, setSelectedStation] = useState("8723214");
+  const [selected, setSelected] = useState(locations[0]);
   const [wind, setWind] = useState<any>(null);
+  const [waves, setWaves] = useState<any>(null);
   const [tides, setTides] = useState<any>(null);
   const [quality, setQuality] = useState<any>(null);
 
@@ -20,16 +23,24 @@ export default function Page() {
   const ozolioIframe = "https://relay.ozolio.com/player/?camId=5121&autoplay=true";
 
   useEffect(() => {
-    fetch("/api/wind").then((r) => r.json()).then(setWind);
-    fetch("/api/tides").then((r) => r.json()).then(setTides);
-    // fetch("/api/water-quality").then((r) => r.json()).then(setQuality);
-  }, []);
+    const { lat, lon } = selected.coords;
 
-  useEffect(() => {
-    fetch(`/api/water-quality?station=${selectedStation}`)
-      .then((r) => r.json())
-      .then(setQuality);
-  }, [selectedStation]);
+    async function fetchData() {
+      const [windData, waveData, tideData, qualityData] = await Promise.all([
+        fetch(`/api/wind?lat=${lat}&lon=${lon}`).then((r) => r.json()),
+        fetch(`/api/waves?lat=${lat}&lon=${lon}`).then((r) => r.json()),
+        fetch(`/api/tides?station=${selected.noaaStation}`).then((r) => r.json()),
+        fetch(`/api/water-quality?id=${selected.swimGuideId}`).then((r) => r.json()),
+      ]);
+
+      setWind(windData);
+      setWaves(waveData);
+      setTides(tideData);
+      setQuality(qualityData);
+    }
+
+    fetchData();
+  }, [selected]);
 
   const waterTemp = tides?.waterTemp?.data?.[0]?.v;
   const windText = wind?.today || "Loading...";
@@ -50,118 +61,117 @@ export default function Page() {
     <main className="max-w-6xl mx-auto p-6 space-y-10 text-white">
       {/* HEADER */}
       <header className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-brand.aqua">
-          🌊 Miami Watersports Dashboard
-        </h1>
-        <p className="text-white/70">
-          Kiteboarding • Wakeboarding • Surf conditions
+        <p className="text-ocean">
+          Choose location to preview:
         </p>
 
         {/* DROPDOWN */}
         <div className="flex justify-center">
           <select
-            value={selectedStation}
-            onChange={(e) => setSelectedStation(e.target.value)}
-            className="bg-brand.purple text-white border border-white/20 rounded-xl px-4 py-2 focus:ring-2 focus:ring-brand.aqua outline-none"
+            value={selected.id}
+            onChange={(e) => {
+              const newStation = locations.find((s) => s.id === e.target.value);
+              if (newStation) setSelected(newStation);
+            }}
+            className="bg-sand border border-ocean/20 text-ocean rounded-xl px-4 py-2 focus:ring-2 focus:ring-coral"
           >
-            {stations.map((s) => (
+            {locations.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
             ))}
           </select>
         </div>
+        <p className="text-sm text-ocean/70 mt-2">
+            Showing data for: <span className="font-semibold">{selected.name}</span>
+        </p>
       </header>
 
       {/* STATS CARDS */}
       <section className="grid md:grid-cols-3 gap-6">
-        {/* Wind Forecast */}
         <Card>
           <CardHeader title="Wind Forecast (NWS)" />
           <CardBody>
-            {wind?.error ? (
-              <p className="text-red-400 text-sm">Error loading forecast</p>
-            ) : (
+            <p className="font-semibold text-coral">Today</p>
+            <p className="text-sm opacity-80">
+              {wind?.today || "Loading..."}
+            </p>
+            {wind?.tonight && (
               <>
-                <div className="flex items-center gap-2 text-brand.aqua text-sm font-semibold mb-2">
-                  💨 Today
-                </div>
-                <p className="text-sm opacity-80">{windText}</p>
-                {tonightText && (
-                  <>
-                    <div className="flex items-center gap-2 text-brand.pink text-sm font-semibold mt-4 mb-1">
-                      🌙 Tonight
-                    </div>
-                    <p className="text-sm opacity-80">{tonightText}</p>
-                  </>
-                )}
+                <p className="font-semibold text-ocean mt-4">Tonight</p>
+                <p className="text-sm opacity-80">{wind.tonight}</p>
               </>
             )}
           </CardBody>
         </Card>
 
-        {/* Tide & Water Temp */}
         <Card>
-          <CardHeader title="Tide & Water Temp (NOAA)" />
+          <CardHeader title="Wave Height (Open-Meteo)" />
           <CardBody>
-            {waterTemp ? (
-              <div className="flex flex-col items-start space-y-2">
-                <div className="flex items-center gap-2 text-brand.aqua text-lg font-bold">
-                  🌡️ {waterTemp} °F
-                </div>
-                <p className="text-sm opacity-80">
-                  Sea surface temperature near Virginia Key.
-                </p>
-              </div>
+            {waves ? (
+              <p className="text-lg font-bold text-ocean">
+                🌊 {waves.waveHeight?.toFixed(1)} m
+              </p>
             ) : (
-              <p className="text-sm opacity-50">Loading water data...</p>
+              <p className="text-sm opacity-60">Loading...</p>
             )}
           </CardBody>
         </Card>
 
-        {/* Water Quality */}
         <Card>
-          <CardHeader title="Water Conditions (NOAA)" />
+          <CardHeader title="Water Quality (Swim Guide)" />
           <CardBody>
-            {quality?.error ? (
-              <p className="text-sm text-red-400">Error loading data</p>
-            ) : quality ? (
-              <div className="space-y-2 text-sm">
-                {quality.temperature && (
-                  <div className="flex items-center gap-2">
-                    🌡️ <span>Temperature:</span>
-                    <span className="font-semibold text-brand.aqua">
-                      {quality.temperature} °F
-                    </span>
-                  </div>
-                )}
-                {quality.salinity && (
-                  <div className="flex items-center gap-2">
-                    🌊 <span>Salinity:</span>
-                    <span className="font-semibold text-brand.pink">
-                      {quality.salinity} PSU
-                    </span>
-                  </div>
-                )}
-                {quality.oxygen && (
-                  <div className="flex items-center gap-2">
-                    🫧 <span>Dissolved Oxygen:</span>
-                    <span className="font-semibold text-green-400">
-                      {quality.oxygen} mg/L
-                    </span>
-                  </div>
-                )}
-                <p className="text-xs text-white/40 mt-2">
-                  Station ID: {quality.station || "—"} • Last update:{" "}
-                  {quality.timestamp || "—"}
-                </p>
-              </div>
+            {quality?.status ? (
+              <p
+                className={`text-lg font-semibold ${
+                  quality.status.includes("Good")
+                    ? "text-green-600"
+                    : quality.status.includes("Poor")
+                    ? "text-red-500"
+                    : "text-yellow-500"
+                }`}
+              >
+                {quality.status}
+              </p>
             ) : (
-              <p className="text-sm opacity-50">Loading latest readings...</p>
+              <p className="text-sm opacity-60">Loading...</p>
             )}
           </CardBody>
         </Card>
 
+        <Card className="md:col-span-3">
+          <CardHeader title="Water Temperature (NOAA)" />
+          <CardBody>
+            <p className="text-lg font-bold text-ocean">
+              🌡️ {tides?.data?.[0]?.v || "—"} °F
+            </p>
+          </CardBody>
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold text-ocean mb-4">📍 Map View</h2>
+        <WindyEmbed lat={selected.coords.lat} lon={selected.coords.lon} />
+      </section>
+
+      {/* LIVE STREAM SECTION */}
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold text-brand.aqua">🎥 Live Beach Cams</h2>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <WebcamEmbed
+            title="Key Biscayne Kite Shop Cam"
+            src="https://g1.ipcamlive.com/player/player.php?alias=6030787be95a2&autoplay=true"
+          />
+          <YouTubeEmbed
+            title="Coral City Camera"
+            videoId="7i8ARjIeM2k" // your YouTube video ID
+          />
+          <YouTubeEmbed
+            title="Fort Lauderdale Beach"
+            videoId="8vTmL-oD3Lo" // your YouTube video ID
+          />
+        </div>
       </section>
 
       {/* WEBCAM LINKS */}
@@ -180,28 +190,9 @@ export default function Page() {
         />
       </section>
 
-      {/* LIVE STREAM SECTION */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-brand.aqua">🎥 Live Beach Cams</h2>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <WebcamEmbed
-            title="Key Biscayne Live Cam"
-            src="https://g1.ipcamlive.com/player/player.php?alias=6030787be95a2&autoplay=true"
-          />
-          <WebcamEmbed
-            title="Miami Beach Ocean Cam"
-            src="https://relay.ozolio.com/player/?camId=5121&autoplay=true"
-          />
-          <YouTubeEmbed
-            title="Coral City Camera"
-            videoId="7i8ARjIeM2k" // your YouTube video ID
-          />
-        </div>
-      </section>
-
-      <footer className="text-center text-xs text-white/40 pt-6">
-        Built for water lovers in Miami 🌴 | Data from NWS, NOAA, and Swim Guide
+      {/* Footer */}
+      <footer className="text-center text-xs text-ocean/60 pt-6">
+        Built for water lovers in Miami 🌴 | Data from NOAA, NWS, Open-Meteo, SwimGuide
       </footer>
     </main>
   );

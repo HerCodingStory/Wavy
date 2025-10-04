@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`rounded-2xl bg-[#111] border border-white/10 shadow-lg ${className}`}>
+    <div className="bg-foam/90 border border-ocean/10 rounded-2xl shadow-md hover:shadow-lg transition-all p-4 text-ocean">
       {children}
     </div>
   );
@@ -10,12 +10,11 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function CardHeader({ title }: { title: string }) {
   return (
-    <div className="p-4 border-b border-white/10">
-      <h3 className="text-lg font-semibold">{title}</h3>
-    </div>
+    <h2 className="text-lg font-semibold text-brand-ocean mb-2">{title}</h2>
   );
 }
 
-export function CardBody({ children }: { children: ReactNode }) {
-  return <div className="p-4">{children}</div>;
+export function CardBody({ children }: { children: React.ReactNode }) {
+  return <div className="text-brand-ocean/90 text-sm">{children}</div>;
 }
+

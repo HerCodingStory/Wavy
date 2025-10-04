@@ -1,29 +1,27 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 
-export const revalidate = 300; // 5 min cache
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
 
-export async function GET() {
+  if (!lat || !lon) return NextResponse.json({ error: "Missing coordinates" });
+
   try {
-    // Step 1: Get grid info for the coordinates (Miami)
-    const pointRes = await fetch("https://api.weather.gov/points/25.724,-80.155");
-    const pointData = await pointRes.json();
+    const res = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+    const meta = await res.json();
+    const forecastUrl = meta?.properties?.forecast;
+    const forecast = await fetch(forecastUrl).then((r) => r.json());
 
-    const forecastUrl = pointData?.properties?.forecast;
-    if (!forecastUrl) throw new Error("No forecast URL from NWS.");
-
-    // Step 2: Fetch the actual forecast
-    const forecastRes = await fetch(forecastUrl);
-    const forecastData = await forecastRes.json();
-
-    const today = forecastData.properties?.periods?.[0];
-    const tonight = forecastData.properties?.periods?.[1];
+    const today = forecast?.properties?.periods?.[0];
+    const tonight = forecast?.properties?.periods?.[1];
 
     return NextResponse.json({
       today: today?.detailedForecast,
       tonight: tonight?.detailedForecast,
-      source: forecastUrl,
     });
-  } catch (error) {
+  } catch (err) {
     return NextResponse.json({ error: "Failed to fetch NWS data" }, { status: 500 });
   }
 }

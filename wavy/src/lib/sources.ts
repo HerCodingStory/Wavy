@@ -1,17 +1,27 @@
-export const MIAMI = {
-    coords: { lat: 25.7617, lon: -80.1918 },
-    coopsStation: "8723214", // Virginia Key NOAA station
-    swimGuideBeachIds: [4468], // Miami Beach example
-};
+export const locations = [
+  {
+    id: "miami-beach",
+    name: "Miami Beach",
+    coords: { lat: 25.790654, lon: -80.1300455 },
+    noaaStation: "8723170",
+    swimGuideId: 4460,
+  },
+  {
+    id: "key-biscayne",
+    name: "Key Biscayne",
+    coords: { lat: 25.686614, lon: -80.165324 },
+    noaaStation: "8723214",
+    swimGuideId: 4462,
+  },
+  {
+    id: "sunny-isles",
+    name: "Sunny Isles Beach",
+    coords: { lat: 25.9503, lon: -80.1228 },
+    noaaStation: "8722990",
+    swimGuideId: 4461,
+  },
+];
 
-export const stations = [
-    { id: "8723214", name: "Virginia Key, FL" },
-    { id: "8723218", name: "Fowey Rocks, FL" },
-    { id: "8724580", name: "Key West, FL" },
-    { id: "8723970", name: "Vaca Key, FL" },
-    { id: "8725110", name: "Naples, FL" },
-  ];
-  
 export const webcams = [
     {
       title: "Key Biscayne Beach Cam",
