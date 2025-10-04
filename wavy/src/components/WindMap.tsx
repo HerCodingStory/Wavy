@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
-import type { LatLngExpression } from "leaflet";
+import type { LatLngExpression, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-velocity/dist/leaflet-velocity.css";
 import "leaflet-velocity";
@@ -16,6 +16,7 @@ interface WindMapProps {
 
 export function WindMap({ lat, lon }: WindMapProps) {
   const [velocityLayer, setVelocityLayer] = useState<any>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
   const position: LatLngExpression = [lat, lon];
 
   useEffect(() => {
@@ -47,7 +48,6 @@ export function WindMap({ lat, lon }: WindMapProps) {
         data: [],
       };
 
-      // generate sample grid for Leaflet-Velocity
       for (let i = 0; i < u.length; i++) {
         grid.data.push(u[i]);
         grid.data.push(v[i]);
@@ -55,7 +55,7 @@ export function WindMap({ lat, lon }: WindMapProps) {
 
       if (velocityLayer) velocityLayer.remove();
 
-      const layer = (L as any).velocityLayer({
+      const layer = L.velocityLayer({
         displayValues: true,
         displayOptions: {
           velocityType: "Global Wind",
@@ -67,6 +67,9 @@ export function WindMap({ lat, lon }: WindMapProps) {
       });
 
       setVelocityLayer(layer);
+
+      // Add to map if already initialized
+      if (mapRef.current) layer.addTo(mapRef.current);
     }
 
     loadWind();
@@ -78,10 +81,11 @@ export function WindMap({ lat, lon }: WindMapProps) {
         center={position}
         zoom={8}
         style={{ height: "100%", width: "100%" }}
-        whenReady={(event) => {
-          const map = event.target;
-          if (velocityLayer) velocityLayer.addTo(map);
+        whenReady={() => {
+          const map = mapRef.current;
+          if (map && velocityLayer) velocityLayer.addTo(map);
         }}
+        ref={mapRef}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
