@@ -93,7 +93,7 @@ export default function Page() {
           <CardHeader title="Wind Forecast (NWS)" />
           <CardBody>
             <p className="font-semibold text-coral">Today</p>
-            <p className="text-sm opacity-80">
+            <p className="text-sm text-coral opacity-80">
               {wind?.today || "Loading..."}
             </p>
             {wind?.tonight && (
@@ -123,7 +123,7 @@ export default function Page() {
           <CardBody>
             {quality?.status ? (
               <p
-                className={`text-lg font-semibold ${
+                className={`text-lg text-coral font-semibold ${
                   quality.status.includes("Good")
                     ? "text-green-600"
                     : quality.status.includes("Poor")
@@ -134,7 +134,7 @@ export default function Page() {
                 {quality.status}
               </p>
             ) : (
-              <p className="text-sm opacity-60">Loading...</p>
+              <p className="text-sm text-coral opacity-60">Loading...</p>
             )}
           </CardBody>
         </Card>
