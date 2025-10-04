@@ -1,8 +1,19 @@
 import { ReactNode } from "react";
 
-export function Card({ children }: { children: React.ReactNode }) {
+export function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="bg-foam/90 border border-ocean/10 rounded-2xl shadow-md hover:shadow-lg transition-all p-4 text-ocean">
+    <div
+      className={clsx(
+        "bg-foam/80 border border-ocean/10 rounded-2xl shadow-md p-4",
+        className
+      )}
+    >
       {children}
     </div>
   );
