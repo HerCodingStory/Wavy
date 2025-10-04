@@ -78,7 +78,8 @@ export function WindMap({ lat, lon }: WindMapProps) {
         center={position}
         zoom={8}
         style={{ height: "100%", width: "100%" }}
-        whenCreated={(map) => {
+        whenReady={(event) => {
+          const map = event.target;
           if (velocityLayer) velocityLayer.addTo(map);
         }}
       >
