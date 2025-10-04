@@ -99,7 +99,7 @@ export default function Page() {
             {wind?.tonight && (
               <>
                 <p className="font-semibold text-ocean mt-4">Tonight</p>
-                <p className="text-sm opacity-80">{wind.tonight}</p>
+                <p className="text-sm text-ocean opacity-80">{wind.tonight}</p>
               </>
             )}
           </CardBody>
