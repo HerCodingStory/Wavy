@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-velocity/dist/leaflet-velocity.css";
 import "leaflet-velocity";
@@ -15,6 +16,7 @@ interface WindMapProps {
 
 export function WindMap({ lat, lon }: WindMapProps) {
   const [velocityLayer, setVelocityLayer] = useState<any>(null);
+  const position: LatLngExpression = [lat, lon];
 
   useEffect(() => {
     async function loadWind() {
@@ -73,7 +75,7 @@ export function WindMap({ lat, lon }: WindMapProps) {
   return (
     <div className="rounded-xl overflow-hidden border border-ocean h-[400px] shadow-md">
       <MapContainer
-        center={[lat, lon]}
+        center={position}
         zoom={8}
         style={{ height: "100%", width: "100%" }}
         whenCreated={(map) => {
