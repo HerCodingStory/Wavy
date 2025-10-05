@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const station = searchParams.get("station") || "8723214";
+
+  const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=salinity&station=${station}&date=latest&units=english&time_zone=lst_ldt&format=json`;
+
   try {
-    const id = 4460; // Miami Beach ID
-    const res = await fetch(`https://www.theswimguide.org/api/beach/?format=json&id=${id}`);
-    const json = await res.json();
+    const res = await fetch(url);
+    const data = await res.json();
 
-    const status = json?.[0]?.status_label || "Unavailable";
-    const name = json?.[0]?.name;
+    const value = data?.data?.[0]?.v || "Unavailable";
 
-    return NextResponse.json({ name, status });
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch SwimGuide data" }, { status: 500 });
+    return NextResponse.json({
+      status: value !== "Unavailable" ? "Good" : "Unavailable",
+      salinity: value,
+      source: "NOAA",
+    });
+  } catch (e) {
+    return NextResponse.json({ status: "Unavailable", source: "NOAA" });
   }
 }

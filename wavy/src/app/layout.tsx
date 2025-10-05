@@ -3,20 +3,25 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "WAVY Dashboard",
-  description: "Live conditions for kitesurfing, wakeboarding, and surfing in Miami",
+  description:
+    "Live conditions for kitesurfing, wakeboarding, and surfing in Miami",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="bg-brand-sand text-brand-ocean min-h-screen antialiased">
-        <header className="flex flex-col items-center py-6 space-y-3">
-          <img src="/logo.png" alt="WAVY Logo" className="w-50 h-50" />
-          <p className="text-brand-ocean/70 text-sm">
-            Kiteboarding • Wakeboarding • Surf conditions
-          </p>
-        </header>
-        <main className="max-w-6xl mx-auto px-6 pb-12">{children}</main>
+      <body className="bg-sand text-ocean min-h-screen antialiased font-[Inter]">
+        {/* The dashboard (sidebar + content) will render here */}
+        {children}
+
+        {/* Optional global footer */}
+        <footer className="text-center text-xs text-ocean/60 py-4 border-t border-ocean/10">
+          Built for water lovers in Miami 🌴 | Data from NOAA, NWS, Open-Meteo, SwimGuide
+        </footer>
       </body>
     </html>
   );

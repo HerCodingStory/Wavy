@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -6,18 +7,17 @@ export async function GET(req: Request) {
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
 
-  if (!lat || !lon) return NextResponse.json({ error: "Missing coordinates" });
+  const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=America/New_York`;
 
-  try {
-    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wind_wave_direction`;
-    const res = await fetch(url);
-    const data = await res.json();
+  const res = await fetch(url);
+  const data = await res.json();
 
-    const height = data?.hourly?.wave_height?.[0];
-    const dir = data?.hourly?.wind_wave_direction?.[0];
+  const idx = data.hourly.time.findIndex((t: string) => t.includes("12:00"));
+  const wave = {
+    waveHeight: data.hourly.wave_height[idx],
+    waveDir: data.hourly.wave_direction[idx],
+    wavePeriod: data.hourly.wave_period[idx],
+  };
 
-    return NextResponse.json({ waveHeight: height, direction: dir });
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch waves" }, { status: 500 });
-  }
+  return NextResponse.json(wave);
 }
