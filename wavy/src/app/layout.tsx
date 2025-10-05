@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "WAVY Dashboard",
+  title: "WAVY",
   description:
     "Live conditions for kitesurfing, wakeboarding, and surfing in Miami",
 };
