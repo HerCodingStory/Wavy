@@ -147,10 +147,12 @@ export async function GET(req: Request) {
       windSpeed: windSpeedMph.toFixed(1),
       windGusts: (windGusts * 2.237).toFixed(1),
       windDirection: windDirection?.toFixed(0),
-      waveHeight: waveHeight?.toFixed(2),
+      waveHeight: (waveHeight * 3.28084).toFixed(2), // Convert to feet
       wavePeriod: wavePeriod?.toFixed(1),
       gustFactor: gustFactor.toFixed(1),
       timestamp: windData.hourly.time[currentIdx],
+      unit: "ft",
+      windUnit: "mph",
     });
   } catch (error) {
     console.error("Paddleboarding conditions API error:", error);

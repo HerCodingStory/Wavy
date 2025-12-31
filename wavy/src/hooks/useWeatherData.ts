@@ -43,6 +43,7 @@ export function useWeatherData() {
     waveEnergy: weatherData?.waveEnergy || null,
     waveConsistency: weatherData?.waveConsistency || null,
     quality: weatherData?.quality || null,
+    waterVisibility: weatherData?.waterVisibility || null,
     surfingConditions: weatherData?.surfingConditions || null,
     kiteboardingConditions: weatherData?.kiteboardingConditions || null,
     wakeboardingConditions: weatherData?.wakeboardingConditions || null,

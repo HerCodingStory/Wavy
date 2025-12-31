@@ -140,10 +140,12 @@ export async function GET(req: Request) {
       windSpeed: windSpeedMph.toFixed(1),
       windGusts: windGustsMph.toFixed(1),
       windDirection: windDirection?.toFixed(0),
-      waveHeight: waveHeight?.toFixed(2),
+      waveHeight: (waveHeight * 3.28084).toFixed(2), // Convert to feet
       gustFactor: gustFactor.toFixed(1),
       isOnshore,
       timestamp: windData.hourly.time[currentIdx],
+      unit: "ft",
+      windUnit: "mph",
     });
   } catch (error) {
     console.error("Kiteboarding conditions API error:", error);

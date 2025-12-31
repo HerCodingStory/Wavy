@@ -67,36 +67,53 @@ export async function GET(req: Request) {
 
     const weatherInfo = weatherCodes[c.weathercode] || { description: "Unknown", icon: "🌤️" };
 
+    // Convert Celsius to Fahrenheit: F = (C * 9/5) + 32
+    const tempF = c.temperature_2m != null ? (c.temperature_2m * 9/5 + 32).toFixed(1) : null;
+    const feelsLikeF = c.apparent_temperature != null ? (c.apparent_temperature * 9/5 + 32).toFixed(1) : null;
+    
+    // Convert mm to inches (1mm = 0.0393701 inches)
+    const precipIn = c.precipitation != null ? (c.precipitation * 0.0393701).toFixed(2) : null;
+    
+    // Convert km to miles (1km = 0.621371 miles)
+    const visibilityMi = c.visibility ? ((c.visibility / 1000) * 0.621371).toFixed(1) : null;
+    
+    // Convert m/s to mph (1 m/s = 2.23694 mph)
+    const windSpeedMph = c.windspeed_10m != null ? (c.windspeed_10m * 2.23694).toFixed(1) : null;
+
     return NextResponse.json({
       current: {
-        temperature: c.temperature_2m != null ? c.temperature_2m.toFixed(1) : null,
-        feelsLike: c.apparent_temperature != null ? c.apparent_temperature.toFixed(1) : null,
+        temperature: tempF,
+        feelsLike: feelsLikeF,
         weatherCode: c.weathercode,
         description: weatherInfo.description,
         icon: weatherInfo.icon,
         cloudCover: c.cloudcover,
-        precipitation: c.precipitation,
+        precipitation: precipIn,
         humidity: c.relativehumidity_2m,
         pressure: c.pressure_msl != null ? c.pressure_msl.toFixed(0) : null,
-        visibility: c.visibility ? (c.visibility / 1000).toFixed(1) : null,
-        windSpeed: c.windspeed_10m,
+        visibility: visibilityMi,
+        windSpeed: windSpeedMph,
         windDirection: c.winddirection_10m,
+        uv_index: c.uv_index,
       },
       today: {
-        maxTemp: daily.temperature_2m_max?.[0] != null ? daily.temperature_2m_max[0].toFixed(1) : null,
-        minTemp: daily.temperature_2m_min?.[0] != null ? daily.temperature_2m_min[0].toFixed(1) : null,
-        precipitation: daily.precipitation_sum?.[0] != null ? daily.precipitation_sum[0].toFixed(1) : null,
+        maxTemp: daily.temperature_2m_max?.[0] != null ? (daily.temperature_2m_max[0] * 9/5 + 32).toFixed(1) : null,
+        minTemp: daily.temperature_2m_min?.[0] != null ? (daily.temperature_2m_min[0] * 9/5 + 32).toFixed(1) : null,
+        precipitation: daily.precipitation_sum?.[0] != null ? (daily.precipitation_sum[0] * 0.0393701).toFixed(2) : null,
         sunrise: daily.sunrise?.[0] || null,
         sunset: daily.sunset?.[0] || null,
       },
       forecast: daily.time ? daily.time.slice(0, 7).map((time: string, idx: number) => ({
         date: time,
-        maxTemp: daily.temperature_2m_max?.[idx],
-        minTemp: daily.temperature_2m_min?.[idx],
+        maxTemp: daily.temperature_2m_max?.[idx] != null ? (daily.temperature_2m_max[idx] * 9/5 + 32).toFixed(1) : null,
+        minTemp: daily.temperature_2m_min?.[idx] != null ? (daily.temperature_2m_min[idx] * 9/5 + 32).toFixed(1) : null,
         weatherCode: daily.weathercode?.[idx],
-        precipitation: daily.precipitation_sum?.[idx],
+        precipitation: daily.precipitation_sum?.[idx] != null ? (daily.precipitation_sum[idx] * 0.0393701).toFixed(2) : null,
       })) : [],
-      unit: "°C",
+      unit: "°F",
+      precipUnit: "in",
+      visibilityUnit: "mi",
+      windUnit: "mph",
     });
   } catch (error) {
     console.error("Weather API error:", error);

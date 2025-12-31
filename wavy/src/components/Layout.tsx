@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Home, Wind, Waves, Video, Map, Link as LinkIcon } from "lucide-react";
+import { Menu, X, Home, Wind, Waves, Video, Link as LinkIcon } from "lucide-react";
 import { locations } from "@/lib/sources";
 
 interface LayoutProps {
@@ -22,7 +22,6 @@ export function Layout({ children, selectedLocation, onLocationChange }: LayoutP
     { id: "wind", label: "Wind", icon: <Wind size={18} />, path: "/wind" },
     { id: "waves", label: "Waves", icon: <Waves size={18} />, path: "/waves" },
     { id: "live", label: "Live Cams", icon: <Video size={18} />, path: "/live" },
-    { id: "map", label: "Wind Map", icon: <Map size={18} />, path: "/map" },
     { id: "links", label: "Links", icon: <LinkIcon size={18} />, path: "/links" },
   ];
 

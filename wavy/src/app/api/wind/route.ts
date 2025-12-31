@@ -30,12 +30,17 @@ export async function GET(req: Request) {
     // Get latest available reading
     const latestIndex = hourly.time.length - 1;
 
+    // Convert m/s to mph (1 m/s = 2.23694 mph)
+    const speedMph = hourly.wind_speed_10m[latestIndex] * 2.23694;
+    const gustsMph = hourly.wind_gusts_10m[latestIndex] * 2.23694;
+
     const windData = {
-      speed: hourly.wind_speed_10m[latestIndex],
-      gusts: hourly.wind_gusts_10m[latestIndex],
+      speed: speedMph,
+      gusts: gustsMph,
       direction: hourly.wind_direction_10m[latestIndex],
       timestamp: hourly.time[latestIndex],
       source: "Open-Meteo",
+      unit: "mph",
     };
 
     return NextResponse.json(windData);

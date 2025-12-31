@@ -138,10 +138,12 @@ export async function GET(req: Request) {
       emoji,
       windSpeed: windSpeedMph.toFixed(1),
       windGusts: (windGusts * 2.237).toFixed(1),
-      waveHeight: waveHeight?.toFixed(2),
+      waveHeight: (waveHeight * 3.28084).toFixed(2), // Convert to feet
       wavePeriod: wavePeriod?.toFixed(1),
       gustFactor: gustFactor.toFixed(1),
       timestamp: windData.hourly.time[currentIdx],
+      unit: "ft",
+      windUnit: "mph",
     });
   } catch (error) {
     console.error("Wakeboarding conditions API error:", error);

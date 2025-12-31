@@ -2,14 +2,14 @@ export const locations = [
   // Surfing Spots
   {
     id: "southbeach",
-    name: "South Beach - Surfing",
+    name: "South Beach",
     coords: { lat: 25.790654, lon: -80.1300455 },
     noaaStation: "8723170",
     swimGuideId: "4460",
   },
   {
     id: "haulover",
-    name: "Haulover Beach - Surfing",
+    name: "Haulover Beach",
     coords: { lat: 25.9117, lon: -80.1214 },
     noaaStation: "8722990",
     swimGuideId: "4461",
@@ -17,14 +17,14 @@ export const locations = [
   // Kiteboarding Spots
   {
     id: "crandon",
-    name: "Crandon Park - Kiteboarding",
+    name: "Crandon Park",
     coords: { lat: 25.7000, lon: -80.1500 },
     noaaStation: "8723214",
     swimGuideId: "4462",
   },
   {
     id: "matheson",
-    name: "Matheson Hammock - Kiteboarding",
+    name: "Matheson Hammock",
     coords: { lat: 25.6800, lon: -80.2600 },
     noaaStation: "8723214",
     swimGuideId: "4462",
@@ -32,14 +32,14 @@ export const locations = [
   // Snorkeling Spots
   {
     id: "virginiakey",
-    name: "Virginia Key Beach - Snorkeling",
+    name: "Virginia Key Beach",
     coords: { lat: 25.7300, lon: -80.1600 },
     noaaStation: "8723214",
     swimGuideId: "4462",
   },
   {
     id: "biscaynenp",
-    name: "Biscayne National Park - Snorkeling",
+    name: "Biscayne National Park",
     coords: { lat: 25.4000, lon: -80.2000 },
     noaaStation: "8723214",
     swimGuideId: "4462",
@@ -47,14 +47,14 @@ export const locations = [
   // Paddleboarding Spots
   {
     id: "oleta",
-    name: "Oleta River State Park - Paddleboarding",
+    name: "Oleta River State Park",
     coords: { lat: 25.9300, lon: -80.1300 },
     noaaStation: "8722990",
     swimGuideId: "4461",
   },
   {
     id: "keybiscayne",
-    name: "Key Biscayne - Paddleboarding",
+    name: "Key Biscayne",
     coords: { lat: 25.686614, lon: -80.165324 },
     noaaStation: "8723214",
     swimGuideId: "4462",
@@ -62,7 +62,7 @@ export const locations = [
   // Wakeboarding
   {
     id: "amelia",
-    name: "Amelia Earhart Park - Wakeboarding",
+    name: "Amelia Earhart Park",
     coords: { lat: 25.8900, lon: -80.2800 },
     noaaStation: "8722990",
     swimGuideId: "4461",
