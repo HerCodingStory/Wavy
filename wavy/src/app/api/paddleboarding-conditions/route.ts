@@ -1,0 +1,163 @@
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
+
+  if (!lat || !lon) {
+    return NextResponse.json(
+      { error: "Latitude and longitude required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Fetch wind and wave data
+    const [windRes, waveRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=America/New_York`),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period&timezone=America/New_York`),
+    ]);
+
+    if (!windRes.ok || !waveRes.ok) {
+      throw new Error("Failed to fetch data");
+    }
+
+    const windData = await windRes.json();
+    const waveData = await waveRes.json();
+
+    if (!windData.hourly?.time?.length || !waveData.hourly?.time?.length) {
+      return NextResponse.json(
+        { error: "No data available" },
+        { status: 404 }
+      );
+    }
+
+    // Get current data
+    const now = new Date();
+    let currentIdx = windData.hourly.time.length - 1;
+    let minDiff = Math.abs(new Date(windData.hourly.time[currentIdx]).getTime() - now.getTime());
+
+    for (let i = 0; i < windData.hourly.time.length; i++) {
+      const diff = Math.abs(new Date(windData.hourly.time[i]).getTime() - now.getTime());
+      if (diff < minDiff) {
+        minDiff = diff;
+        currentIdx = i;
+      }
+    }
+
+    const windSpeed = windData.hourly.wind_speed_10m[currentIdx];
+    const windGusts = windData.hourly.wind_gusts_10m[currentIdx];
+    const windDirection = windData.hourly.wind_direction_10m[currentIdx];
+    const waveHeight = waveData.hourly.wave_height[currentIdx];
+    const wavePeriod = waveData.hourly.wave_period[currentIdx];
+
+    // Convert wind speed from m/s to mph
+    const windSpeedMph = windSpeed * 2.237;
+
+    // Calculate condition score (0-100)
+    // Paddleboarding prefers calm, flat water conditions
+    let score = 50; // Base score
+
+    // Wind speed: Light wind (5-12 mph) is ideal, calm is perfect
+    if (windSpeedMph < 5) {
+      score += 30; // Perfect - glassy conditions
+    } else if (windSpeedMph >= 5 && windSpeedMph <= 12) {
+      score += 25; // Ideal - light breeze helps with stability
+    } else if (windSpeedMph < 15) {
+      score += 10; // Acceptable
+    } else if (windSpeedMph < 20) {
+      score -= 10; // Getting challenging
+    } else {
+      score -= 25; // Too windy, difficult to paddle
+    }
+
+    // Wave height: Flat water (0-0.5m) is ideal
+    if (waveHeight < 0.3) {
+      score += 25; // Glassy, perfect
+    } else if (waveHeight < 0.5) {
+      score += 15; // Very smooth
+    } else if (waveHeight < 1.0) {
+      score += 5; // Small waves, okay for experienced paddlers
+    } else if (waveHeight < 1.5) {
+      score -= 10; // Getting choppy, challenging
+    } else {
+      score -= 20; // Too choppy, unsafe
+    }
+
+    // Wave period: Longer period = smoother water (better)
+    if (wavePeriod > 8) {
+      score += 10; // Longer period = smoother
+    } else if (wavePeriod < 4) {
+      score -= 10; // Short period = choppy
+    }
+
+    // Wind direction: Light tailwind or crosswind is okay, headwind makes it harder
+    // For paddleboarding, direction matters less than speed, but headwind is harder
+    // We'll use a simple check - if wind is very light, direction doesn't matter much
+    if (windSpeedMph < 8) {
+      score += 5; // Light wind, direction doesn't matter
+    }
+
+    // Wind consistency: Check gust factor
+    const gustFactor = (windGusts - windSpeed) * 2.237;
+    if (gustFactor < 3) {
+      score += 10; // Very consistent
+    } else if (gustFactor > 8) {
+      score -= 10; // Very gusty, creates instability
+    }
+
+    // Ensure score is between 0-100
+    score = Math.max(0, Math.min(100, score));
+
+    // Determine condition level
+    let level = "Poor";
+    let description = "Not ideal for paddleboarding";
+    let emoji = "❌";
+
+    if (score >= 80) {
+      level = "Excellent";
+      description = "Perfect paddleboarding conditions - calm and flat";
+      emoji = "🛶";
+    } else if (score >= 65) {
+      level = "Good";
+      description = "Great conditions for paddleboarding";
+      emoji = "👍";
+    } else if (score >= 50) {
+      level = "Fair";
+      description = "Paddleable conditions";
+      emoji = "🤷";
+    } else if (score >= 35) {
+      level = "Poor";
+      description = "Marginal conditions - choppy water";
+      emoji = "⚠️";
+    } else {
+      level = "Very Poor";
+      description = "Not recommended - too choppy";
+      emoji = "❌";
+    }
+
+    return NextResponse.json({
+      score: Math.round(score),
+      level,
+      description,
+      emoji,
+      windSpeed: windSpeedMph.toFixed(1),
+      windGusts: (windGusts * 2.237).toFixed(1),
+      windDirection: windDirection?.toFixed(0),
+      waveHeight: waveHeight?.toFixed(2),
+      wavePeriod: wavePeriod?.toFixed(1),
+      gustFactor: gustFactor.toFixed(1),
+      timestamp: windData.hourly.time[currentIdx],
+    });
+  } catch (error) {
+    console.error("Paddleboarding conditions API error:", error);
+    return NextResponse.json(
+      { error: "Failed to calculate paddleboarding conditions" },
+      { status: 500 }
+    );
+  }
+}
+

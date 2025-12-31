@@ -8,13 +8,13 @@ interface WebcamEmbedProps {
 export function WebcamEmbed({ title, src }: WebcamEmbedProps) {
   return (
     <div className="rounded-2xl overflow-hidden shadow-md border border-white/10 bg-black/30">
-      <div className="p-2 bg-black/50 text-center text-sm text-white/80 font-semibold">
+      <div className="p-3 bg-black/50 text-center text-base text-white/80 font-semibold">
         {title}
       </div>
       <iframe
         src={src}
         title={title}
-        className="w-full aspect-video"
+        className="w-full aspect-[16/9] min-h-[500px]"
         allow="autoplay; fullscreen"
         allowFullScreen
       />

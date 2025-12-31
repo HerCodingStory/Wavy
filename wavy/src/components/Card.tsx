@@ -22,11 +22,11 @@ export function Card({
 
 export function CardHeader({ title }: { title: string }) {
   return (
-    <h2 className="text-lg font-semibold text-brand-ocean mb-2">{title}</h2>
+    <h2 className="text-lg font-semibold text-ocean mb-2">{title}</h2>
   );
 }
 
 export function CardBody({ children }: { children: React.ReactNode }) {
-  return <div className="text-brand-ocean/90 text-sm">{children}</div>;
+  return <div className="text-ocean/90 text-sm">{children}</div>;
 }
 
