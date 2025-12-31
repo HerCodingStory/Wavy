@@ -73,9 +73,12 @@ export default function DashboardPage() {
         {loading ? (
           <LoadingWaves />
         ) : weather?.forecast && weather.forecast.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
             {weather.forecast.map((day: any, idx: number) => {
               const date = new Date(day.date);
+              const today = new Date();
+              const isToday = date.toDateString() === today.toDateString();
+              
               const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
               const dayNum = date.getDate();
               const month = date.toLocaleDateString("en-US", { month: "short" });
@@ -92,10 +95,11 @@ export default function DashboardPage() {
               };
               
               const icon = weatherIcons[day.weatherCode] || "🌤️";
+              const title = isToday ? "Today" : `${dayName}, ${month} ${dayNum}`;
               
               return (
-                <Card key={idx}>
-                  <CardHeader title={`${dayName}, ${month} ${dayNum}`} />
+                <Card key={idx} className={idx >= 3 ? "hidden md:block" : ""}>
+                  <CardHeader title={title} />
                   <CardBody>
                     <div className="text-center">
                       <p className="text-4xl mb-2">{icon}</p>
