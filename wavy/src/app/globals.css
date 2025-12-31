@@ -13,6 +13,17 @@ body {
   color: var(--color-ocean);
   font-family: "Inter", sans-serif;
   min-height: 100vh;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
+}
+
+/* Safe area insets for mobile devices */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Headings */

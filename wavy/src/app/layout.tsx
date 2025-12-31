@@ -7,6 +7,19 @@ export const metadata: Metadata = {
   title: "WAVY - Miami Weather Conditions",
   description:
     "Live conditions for kitesurfing, wakeboarding, paddleboarding, and surfing in Miami",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+  },
+  themeColor: "#0D3B3B",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WAVY",
+  },
 };
 
 export default function RootLayout({
