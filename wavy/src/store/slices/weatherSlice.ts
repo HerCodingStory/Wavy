@@ -11,6 +11,7 @@ interface WeatherData {
   waveEnergy: any;
   waveConsistency: any;
   quality: any;
+  waterVisibility: any;
   surfingConditions: any;
   kiteboardingConditions: any;
   wakeboardingConditions: any;
@@ -73,6 +74,7 @@ export const fetchWeatherData = createAsyncThunk(
       waveConsistencyRes,
       airRes,
       qualityRes,
+      waterVisibilityRes,
       surfingRes,
       kiteboardingRes,
       wakeboardingRes,
@@ -88,7 +90,8 @@ export const fetchWeatherData = createAsyncThunk(
       fetch(`/api/wave-energy?lat=${lat}&lon=${lon}`),
       fetch(`/api/wave-consistency?lat=${lat}&lon=${lon}`),
       fetch(`/api/air?lat=${lat}&lon=${lon}`),
-      fetch(`/api/water-quality?station=${station}`),
+      fetch(`/api/water-quality?station=${station}&lat=${lat}&lon=${lon}`),
+      fetch(`/api/water-visibility?lat=${lat}&lon=${lon}`),
       fetch(`/api/surfing-conditions?lat=${lat}&lon=${lon}`),
       fetch(`/api/kiteboarding-conditions?lat=${lat}&lon=${lon}`),
       fetch(`/api/wakeboarding-conditions?lat=${lat}&lon=${lon}`),
@@ -107,6 +110,7 @@ export const fetchWeatherData = createAsyncThunk(
       waveConsistency: await parseResponse(waveConsistencyRes),
       air: await parseResponse(airRes),
       quality: await parseResponse(qualityRes),
+      waterVisibility: await parseResponse(waterVisibilityRes),
       surfingConditions: await parseResponse(surfingRes),
       kiteboardingConditions: await parseResponse(kiteboardingRes),
       wakeboardingConditions: await parseResponse(wakeboardingRes),

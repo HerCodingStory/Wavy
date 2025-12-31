@@ -19,7 +19,7 @@ export default function RootLayout({
       <body className="bg-sand text-ocean min-h-screen antialiased font-[Inter]">
         <ReduxProvider>
           <LocationProvider>
-            {children}
+        {children}
           </LocationProvider>
         </ReduxProvider>
       </body>

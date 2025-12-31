@@ -61,17 +61,29 @@ export async function GET(req: Request) {
     // Formula: surf height ≈ wave height * (1 + period/10)
     const surfHeight = waveHeight * (1 + wavePeriod / 10);
 
+    // Convert meters to feet (1m = 3.28084 ft)
+    const waveHeightFt = waveHeight * 3.28084;
+    const surfHeightFt = surfHeight * 3.28084;
+    const primarySwellFt = {
+      height: waveHeight * 3.28084,
+      period: peakPeriod,
+      direction: waveDir,
+    };
+
     return NextResponse.json({
-      waveHeight: waveHeight?.toFixed(2),
+      waveHeight: waveHeightFt?.toFixed(2),
+      waveHeightM: waveHeight?.toFixed(2), // Keep metric for calculations
       waveDir: waveDir?.toFixed(0),
       wavePeriod: wavePeriod?.toFixed(1),
       peakPeriod: peakPeriod?.toFixed(1),
-      surfHeight: surfHeight?.toFixed(2),
-      primarySwell,
+      surfHeight: surfHeightFt?.toFixed(2),
+      primarySwell: primarySwellFt,
+      primarySwellM: primarySwell, // Keep metric for calculations
+      unit: "ft",
       timestamp: data.hourly.time[currentIdx],
       hourly: {
         time: data.hourly.time.slice(currentIdx, currentIdx + 24),
-        height: data.hourly.wave_height.slice(currentIdx, currentIdx + 24),
+        height: data.hourly.wave_height.slice(currentIdx, currentIdx + 24).map((h: number) => h * 3.28084),
         period: data.hourly.wave_period.slice(currentIdx, currentIdx + 24),
         direction: data.hourly.wave_direction.slice(currentIdx, currentIdx + 24),
       },

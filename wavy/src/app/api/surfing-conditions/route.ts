@@ -49,23 +49,25 @@ export async function GET(req: Request) {
       }
     }
 
-    const waveHeight = waveData.hourly.wave_height[currentIdx];
+    const waveHeightM = waveData.hourly.wave_height[currentIdx];
+    const waveHeight = waveHeightM * 3.28084; // Convert to feet
     const wavePeriod = waveData.hourly.wave_period[currentIdx];
     const waveDirection = waveData.hourly.wave_direction[currentIdx];
-    const windSpeed = windData.hourly.wind_speed_10m[currentIdx];
+    const windSpeedMps = windData.hourly.wind_speed_10m[currentIdx];
+    const windSpeed = windSpeedMps * 2.23694; // Convert to mph
     const windDirection = windData.hourly.wind_direction_10m[currentIdx];
 
     // Calculate condition score (0-100)
     let score = 50; // Base score
 
-    // Wave height: 0.5-2m is ideal for most surfers
-    if (waveHeight >= 0.5 && waveHeight <= 2.0) {
+    // Wave height: 1.6-6.6ft (0.5-2m) is ideal for most surfers
+    if (waveHeight >= 1.6 && waveHeight <= 6.6) {
       score += 25;
-    } else if (waveHeight >= 0.3 && waveHeight <= 2.5) {
+    } else if (waveHeight >= 1.0 && waveHeight <= 8.2) {
       score += 15;
-    } else if (waveHeight < 0.3) {
+    } else if (waveHeight < 1.0) {
       score -= 20; // Too flat
-    } else if (waveHeight > 3.0) {
+    } else if (waveHeight > 9.8) {
       score -= 15; // Too big for most
     }
 
@@ -135,6 +137,8 @@ export async function GET(req: Request) {
       windDirection: windDirection?.toFixed(0),
       isOffshore,
       timestamp: waveData.hourly.time[currentIdx],
+      unit: "ft",
+      windUnit: "mph",
     });
   } catch (error) {
     console.error("Surfing conditions API error:", error);

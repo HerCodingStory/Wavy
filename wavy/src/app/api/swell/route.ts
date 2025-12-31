@@ -44,8 +44,13 @@ export async function GET(req: Request) {
       }
     }
 
+    // Convert meters to feet (1m = 3.28084 ft)
+    const primaryHeightM = data.hourly.wave_height[currentIdx];
+    const primaryHeightFt = primaryHeightM * 3.28084;
+
     const primarySwell = {
-      height: data.hourly.wave_height[currentIdx]?.toFixed(2),
+      height: primaryHeightFt?.toFixed(2),
+      heightM: primaryHeightM?.toFixed(2), // Keep metric for calculations
       period: data.hourly.wave_peak_period?.[currentIdx] || data.hourly.wave_period[currentIdx],
       direction: data.hourly.wave_direction[currentIdx],
       directionCardinal: getCardinalDirection(data.hourly.wave_direction[currentIdx]),
@@ -59,8 +64,12 @@ export async function GET(req: Request) {
     );
     const avgPeriod = nearbyPeriods.reduce((a: number, b: number) => a + b, 0) / nearbyPeriods.length;
 
+    const secondaryHeightM = data.hourly.wave_height[currentIdx] * 0.6; // Estimate
+    const secondaryHeightFt = secondaryHeightM * 3.28084;
+
     const secondarySwell = {
-      height: (data.hourly.wave_height[currentIdx] * 0.6)?.toFixed(2), // Estimate
+      height: secondaryHeightFt?.toFixed(2),
+      heightM: secondaryHeightM?.toFixed(2), // Keep metric for calculations
       period: avgPeriod?.toFixed(1),
       direction: (data.hourly.wave_direction[currentIdx] + 30) % 360, // Estimate
       directionCardinal: getCardinalDirection((data.hourly.wave_direction[currentIdx] + 30) % 360),
@@ -70,6 +79,7 @@ export async function GET(req: Request) {
       primary: primarySwell,
       secondary: secondarySwell,
       timestamp: data.hourly.time[currentIdx],
+      unit: "ft",
     });
   } catch (error) {
     console.error("Swell API error:", error);

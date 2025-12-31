@@ -4,18 +4,13 @@ import { Layout } from "@/components/Layout";
 import { useLocation } from "@/contexts/LocationContext";
 import { useWeatherData } from "@/hooks/useWeatherData";
 import { Card, CardBody, CardHeader } from "@/components/Card";
+import { LoadingWaves } from "@/components/LoadingWaves";
 
 export default function DashboardPage() {
   const { selected, setSelected } = useLocation();
   const {
-    wind,
-    waves,
-    swell,
     weather,
-    tides,
     waterTemp,
-    waveEnergy,
-    waveConsistency,
     surfingConditions,
     kiteboardingConditions,
     wakeboardingConditions,
@@ -24,129 +19,105 @@ export default function DashboardPage() {
     loading,
   } = useWeatherData();
 
-  function getCardinalDirection(degrees: number): string {
-    const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-    return directions[Math.round(degrees / 22.5) % 16];
-  }
 
-  function formatTime(timeString: string): string {
-    try {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-    } catch {
-      return timeString;
-    }
-  }
-
-  function celsiusToFahrenheit(celsius: number): number {
-    return (celsius * 9) / 5 + 32;
-  }
 
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
-      {/* Main Stats Grid */}
+      {/* Temperature */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Current Conditions</h2>
+        <h2 className="text-2xl font-bold">Temperature</h2>
         {loading ? (
-          <div className="text-center py-8 text-ocean/60">Loading conditions...</div>
+          <LoadingWaves />
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Wave Height */}
+          <div className="grid sm:grid-cols-2 gap-4">
             <Card>
-              <CardHeader title="Wave Height" />
+              <CardHeader title="Current Temperature" />
               <CardBody>
-                <p className="text-3xl font-bold text-ocean">
-                  {waves?.waveHeight ? `${parseFloat(waves.waveHeight).toFixed(1)}m` : "--"}
-                </p>
-                <p className="text-sm text-ocean/70 mt-1">
-                  Period: {waves?.wavePeriod ? `${waves.wavePeriod}s` : "--"}
-                </p>
-                {waves?.surfHeight && (
-                  <p className="text-xs text-ocean/60 mt-1">
-                    Surf: {parseFloat(waves.surfHeight).toFixed(1)}m
-                  </p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Wind */}
-            <Card>
-              <CardHeader title="Wind" />
-              <CardBody>
-                {wind?.speed ? (
-                  <div>
-                    <p className="text-2xl font-bold text-ocean">
-                      {wind.speed.toFixed(0)} <span className="text-lg">mph</span>
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      Gusts: {wind.gusts?.toFixed(0)} mph
-                    </p>
-                    {wind.direction && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        {getCardinalDirection(wind.direction)} ({wind.direction.toFixed(0)}°)
-                      </p>
-                    )}
-                  </div>
-                ) : (
+                {waterTemp?.error && weather?.error ? (
                   <p className="text-sm text-ocean/50 italic">
-                    {wind?.error || "No data"}
+                    {waterTemp.error || weather.error || "No data"}
                   </p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Swell */}
-            <Card>
-              <CardHeader title="Swell" />
-              <CardBody>
-                {swell?.primary ? (
-                  <div>
-                    <p className="text-xl font-bold text-ocean">
-                      {swell.primary.height}m @ {swell.primary.period}s
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      {swell.primary.directionCardinal} ({swell.primary.direction.toFixed(0)}°)
-                    </p>
-                    {swell.secondary && parseFloat(swell.secondary.height) > 0 && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        Secondary: {swell.secondary.height}m @ {swell.secondary.period}s
-                      </p>
-                    )}
-                  </div>
                 ) : (
-                  <p className="text-sm text-ocean/50 italic">
-                    {swell?.error || "No data"}
-                  </p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Tide */}
-            <Card>
-              <CardHeader title="Tide" />
-              <CardBody>
-                {tides?.current ? (
-                  <div>
-                    <p className="text-2xl font-bold text-ocean">
-                      {tides.current.height} <span className="text-lg">ft</span>
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      {tides.current.isRising ? "↗ Rising" : "↘ Falling"}
-                    </p>
-                    {tides.nextHigh && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        High: {tides.nextHigh.height}ft @ {formatTime(tides.nextHigh.time)}
-                      </p>
-                    )}
+                  <div className="space-y-3">
+                    {waterTemp?.temp ? (
+                      <div>
+                        <p className="text-3xl font-bold text-ocean">
+                          🌊 {waterTemp.temp}°F
+                        </p>
+                        <p className="text-sm text-ocean/70 mt-1">Water Temperature</p>
+                      </div>
+                    ) : waterTemp?.error ? (
+                      <p className="text-sm text-ocean/50">Water: {waterTemp.error}</p>
+                    ) : null}
+                    {weather?.current?.temperature ? (
+                      <div className={waterTemp?.temp ? "mt-4" : ""}>
+                        <p className="text-3xl font-bold text-ocean">
+                          ☀️ {parseFloat(weather.current.temperature).toFixed(0)}°F
+                        </p>
+                        <p className="text-sm text-ocean/70 mt-1">Air Temperature</p>
+                      </div>
+                    ) : weather?.error ? (
+                      <p className="text-sm text-ocean/50">Air: {weather.error}</p>
+                    ) : null}
                   </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">
-                    {tides?.error || "No data"}
-                  </p>
                 )}
               </CardBody>
             </Card>
           </div>
+        )}
+      </section>
+
+      {/* Weather Forecast */}
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">7-Day Weather Forecast</h2>
+        {loading ? (
+          <LoadingWaves />
+        ) : weather?.forecast && weather.forecast.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-7 gap-4">
+            {weather.forecast.map((day: any, idx: number) => {
+              const date = new Date(day.date);
+              const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+              const dayNum = date.getDate();
+              const month = date.toLocaleDateString("en-US", { month: "short" });
+              
+              // Weather code icons
+              const weatherIcons: Record<number, string> = {
+                0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+                45: "🌫️", 48: "🌫️",
+                51: "🌦️", 53: "🌦️", 55: "🌦️",
+                61: "🌧️", 63: "🌧️", 65: "⛈️",
+                71: "❄️", 73: "❄️", 75: "❄️",
+                80: "🌦️", 81: "🌧️", 82: "⛈️",
+                95: "⛈️", 96: "⛈️", 99: "⛈️",
+              };
+              
+              const icon = weatherIcons[day.weatherCode] || "🌤️";
+              
+              return (
+                <Card key={idx}>
+                  <CardHeader title={`${dayName}, ${month} ${dayNum}`} />
+                  <CardBody>
+                    <div className="text-center">
+                      <p className="text-4xl mb-2">{icon}</p>
+                      <p className="text-xl font-bold text-ocean">
+                        {day.maxTemp ? `${day.maxTemp}°` : "--"}
+                      </p>
+                      <p className="text-sm text-ocean/70">
+                        {day.minTemp ? `${day.minTemp}°` : "--"}
+                      </p>
+                      {day.precipitation && parseFloat(day.precipitation) > 0 && (
+                        <p className="text-xs text-ocean/60 mt-1">
+                          💧 {day.precipitation} in
+                        </p>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-ocean/50 italic">No forecast data available</p>
         )}
       </section>
 
