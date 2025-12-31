@@ -1,10 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { LocationProvider } from "@/contexts/LocationContext";
+import { ReduxProvider } from "@/components/ReduxProvider";
 
 export const metadata: Metadata = {
-  title: "WAVY",
+  title: "WAVY - Miami Weather Conditions",
   description:
-    "Live conditions for kitesurfing, wakeboarding, and surfing in Miami",
+    "Live conditions for kitesurfing, wakeboarding, paddleboarding, and surfing in Miami",
 };
 
 export default function RootLayout({
@@ -15,13 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-sand text-ocean min-h-screen antialiased font-[Inter]">
-        {/* The dashboard (sidebar + content) will render here */}
-        {children}
-
-        {/* Optional global footer */}
-        <footer className="text-center text-xs text-ocean/60 py-4 border-t border-ocean/10">
-          Built for water lovers in Miami 🌴 | Data from NOAA, NWS, Open-Meteo, SwimGuide
-        </footer>
+        <ReduxProvider>
+          <LocationProvider>
+            {children}
+          </LocationProvider>
+        </ReduxProvider>
       </body>
     </html>
   );
