@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     // Fetch wind and wave data
     const [windRes, waveRes] = await Promise.all([
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=America/New_York`),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height&timezone=America/New_York`),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period&timezone=America/New_York`),
     ]);
 
     if (!windRes.ok || !waveRes.ok) {
@@ -52,80 +52,93 @@ export async function GET(req: Request) {
     const windGusts = windData.hourly.wind_gusts_10m[currentIdx];
     const windDirection = windData.hourly.wind_direction_10m[currentIdx];
     const waveHeight = waveData.hourly.wave_height[currentIdx];
+    const wavePeriod = waveData.hourly.wave_period[currentIdx];
 
-    // Convert wind speed from m/s to mph for kiteboarding (typical unit)
+    // Convert wind speed from m/s to mph
     const windSpeedMph = windSpeed * 2.237;
     const windGustsMph = windGusts * 2.237;
 
     // Calculate condition score (0-100)
+    // Sailing prefers moderate, consistent wind with manageable waves
     let score = 50; // Base score
 
-    // Wind speed: 12-25 mph is ideal for most kiteboarders
-    if (windSpeedMph >= 12 && windSpeedMph <= 25) {
-      score += 30;
-    } else if (windSpeedMph >= 10 && windSpeedMph <= 30) {
-      score += 20;
-    } else if (windSpeedMph >= 8 && windSpeedMph <= 35) {
-      score += 10;
-    } else if (windSpeedMph < 8) {
-      score -= 25; // Too light
-    } else if (windSpeedMph > 35) {
-      score -= 30; // Too strong, dangerous
+    // Wind speed: 8-20 mph is ideal for most sailing
+    if (windSpeedMph >= 10 && windSpeedMph <= 18) {
+      score += 30; // Perfect sailing wind
+    } else if (windSpeedMph >= 8 && windSpeedMph <= 22) {
+      score += 20; // Good sailing wind
+    } else if (windSpeedMph >= 5 && windSpeedMph <= 25) {
+      score += 10; // Acceptable
+    } else if (windSpeedMph < 5) {
+      score -= 25; // Too light, not enough wind
+    } else if (windSpeedMph > 30) {
+      score -= 30; // Too strong, dangerous conditions
+    } else if (windSpeedMph > 25) {
+      score -= 15; // Very strong, challenging
     }
 
     // Wind consistency: Check gust factor
     const gustFactor = windGustsMph - windSpeedMph;
     if (gustFactor < 5) {
-      score += 15; // Very consistent
+      score += 15; // Very consistent, ideal
     } else if (gustFactor < 10) {
       score += 5; // Reasonably consistent
     } else if (gustFactor > 15) {
-      score -= 15; // Very gusty, dangerous
+      score -= 15; // Very gusty, challenging
     } else {
       score -= 5; // Somewhat gusty
     }
 
-    // Wave height: Smaller is generally better for kiteboarding (flat water preferred)
-    if (waveHeight < 0.5) {
-      score += 15; // Flat water, ideal
-    } else if (waveHeight < 1.0) {
-      score += 5; // Small waves, okay
-    } else if (waveHeight > 2.0) {
-      score -= 10; // Big waves, harder to kite
+    // Wave height: Moderate waves (1-4 ft) are good for sailing, but too big can be dangerous
+    const waveHeightFt = waveHeight * 3.28084;
+    if (waveHeightFt >= 1 && waveHeightFt <= 4) {
+      score += 15; // Good sailing waves
+    } else if (waveHeightFt < 1) {
+      score += 10; // Flat water, smooth sailing
+    } else if (waveHeightFt >= 0.5 && waveHeightFt <= 6) {
+      score += 5; // Acceptable wave conditions
+    } else if (waveHeightFt > 8) {
+      score -= 20; // Too big, dangerous
+    } else if (waveHeightFt > 6) {
+      score -= 10; // Large waves, challenging
     }
 
-    // Wind direction: Onshore (wind from sea to land) is generally safer for beginners
-    // For Miami, onshore typically means wind from E to S (90-180 degrees)
-    // Offshore can be dangerous if you get blown out to sea
-    const isOnshore = windDirection >= 90 && windDirection <= 180;
-    if (isOnshore) {
-      score += 5; // Safer direction
+    // Wave period: Longer period means smoother waves (better for sailing)
+    if (wavePeriod > 8) {
+      score += 10; // Longer period = smoother, better
+    } else if (wavePeriod < 4) {
+      score -= 10; // Short period = choppy, uncomfortable
     }
 
-    // Helper function to calculate kiteboarding score for a given hour
-    const calculateKiteboardingScore = (idx: number): number => {
+    // Wind direction: For Miami area, consistent direction is good
+    // We don't penalize much for direction since sailors can adjust
+
+    // Helper function to calculate sailing score for a given hour
+    const calculateSailingScore = (idx: number): number => {
       const hWindSpeed = windData.hourly.wind_speed_10m[idx];
       const hWindGusts = windData.hourly.wind_gusts_10m[idx];
-      const hWindDirection = windData.hourly.wind_direction_10m[idx];
       const hWaveHeight = waveData.hourly.wave_height[idx];
+      const hWavePeriod = waveData.hourly.wave_period[idx];
 
       const hWindSpeedMph = hWindSpeed * 2.237;
       const hWindGustsMph = hWindGusts * 2.237;
       const hGustFactor = hWindGustsMph - hWindSpeedMph;
-      const hIsOnshore = hWindDirection >= 90 && hWindDirection <= 180;
+      const hWaveHeightFt = hWaveHeight * 3.28084;
 
       let hScore = 50;
 
-      if (hWindSpeedMph >= 12 && hWindSpeedMph <= 25) {
+      if (hWindSpeedMph >= 10 && hWindSpeedMph <= 18) {
         hScore += 30;
-      } else if (hWindSpeedMph >= 10 && hWindSpeedMph <= 30) {
+      } else if (hWindSpeedMph >= 8 && hWindSpeedMph <= 22) {
         hScore += 20;
-      } else if (hWindSpeedMph >= 8 && hWindSpeedMph <= 35) {
+      } else if (hWindSpeedMph >= 5 && hWindSpeedMph <= 25) {
         hScore += 10;
-      } else if (hWindSpeedMph < 8) {
+      } else if (hWindSpeedMph < 5) {
         hScore -= 25;
-      } else if (hWindSpeedMph > 35) {
+      } else if (hWindSpeedMph > 30) {
         hScore -= 30;
+      } else if (hWindSpeedMph > 25) {
+        hScore -= 15;
       }
 
       if (hGustFactor < 5) {
@@ -138,16 +151,22 @@ export async function GET(req: Request) {
         hScore -= 5;
       }
 
-      if (hWaveHeight < 0.5) {
+      if (hWaveHeightFt >= 1 && hWaveHeightFt <= 4) {
         hScore += 15;
-      } else if (hWaveHeight < 1.0) {
+      } else if (hWaveHeightFt < 1) {
+        hScore += 10;
+      } else if (hWaveHeightFt >= 0.5 && hWaveHeightFt <= 6) {
         hScore += 5;
-      } else if (hWaveHeight > 2.0) {
+      } else if (hWaveHeightFt > 8) {
+        hScore -= 20;
+      } else if (hWaveHeightFt > 6) {
         hScore -= 10;
       }
 
-      if (hIsOnshore) {
-        hScore += 5;
+      if (hWavePeriod > 8) {
+        hScore += 10;
+      } else if (hWavePeriod < 4) {
+        hScore -= 10;
       }
 
       return Math.max(0, Math.min(100, hScore));
@@ -160,7 +179,7 @@ export async function GET(req: Request) {
     const hoursToCheck = Math.min(48, windData.hourly.time.length - currentIdx);
 
     for (let i = currentIdx; i < currentIdx + hoursToCheck; i++) {
-      const hourScore = calculateKiteboardingScore(i);
+      const hourScore = calculateSailingScore(i);
       if (hourScore > bestScore) {
         bestScore = hourScore;
         bestIdx = i;
@@ -173,20 +192,20 @@ export async function GET(req: Request) {
 
     // Determine condition level
     let level = "Poor";
-    let description = "Not ideal for kiteboarding";
+    let description = "Not ideal for sailing";
     let emoji = "❌";
 
     if (score >= 80) {
       level = "Excellent";
-      description = "Perfect kiteboarding conditions";
-      emoji = "🪁";
+      description = "Perfect sailing conditions";
+      emoji = "⛵";
     } else if (score >= 65) {
       level = "Good";
-      description = "Great conditions for kiteboarding";
+      description = "Great conditions for sailing";
       emoji = "👍";
     } else if (score >= 50) {
       level = "Fair";
-      description = "Kiteable conditions";
+      description = "Sailable conditions";
       emoji = "🤷";
     } else if (score >= 35) {
       level = "Poor";
@@ -206,9 +225,9 @@ export async function GET(req: Request) {
       windSpeed: windSpeedMph.toFixed(1),
       windGusts: windGustsMph.toFixed(1),
       windDirection: windDirection?.toFixed(0),
-      waveHeight: (waveHeight * 3.28084).toFixed(2), // Convert to feet
+      waveHeight: waveHeightFt.toFixed(2),
+      wavePeriod: wavePeriod?.toFixed(1),
       gustFactor: gustFactor.toFixed(1),
-      isOnshore,
       timestamp: windData.hourly.time[currentIdx],
       unit: "ft",
       windUnit: "mph",
@@ -231,9 +250,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Kiteboarding conditions API error:", error);
+    console.error("Sailing conditions API error:", error);
     return NextResponse.json(
-      { error: "Failed to calculate kiteboarding conditions" },
+      { error: "Failed to calculate sailing conditions" },
       { status: 500 }
     );
   }

@@ -109,6 +109,76 @@ export async function GET(req: Request) {
       score -= 10; // Very gusty, creates instability
     }
 
+    // Helper function to calculate paddleboarding score for a given hour
+    const calculatePaddleboardingScore = (idx: number): number => {
+      const hWindSpeed = windData.hourly.wind_speed_10m[idx];
+      const hWindGusts = windData.hourly.wind_gusts_10m[idx];
+      const hWaveHeight = waveData.hourly.wave_height[idx];
+      const hWavePeriod = waveData.hourly.wave_period[idx];
+
+      const hWindSpeedMph = hWindSpeed * 2.237;
+      const hGustFactor = (hWindGusts - hWindSpeed) * 2.237;
+
+      let hScore = 50;
+
+      if (hWindSpeedMph < 5) {
+        hScore += 30;
+      } else if (hWindSpeedMph >= 5 && hWindSpeedMph <= 12) {
+        hScore += 25;
+      } else if (hWindSpeedMph < 15) {
+        hScore += 10;
+      } else if (hWindSpeedMph < 20) {
+        hScore -= 10;
+      } else {
+        hScore -= 25;
+      }
+
+      if (hWaveHeight < 0.3) {
+        hScore += 25;
+      } else if (hWaveHeight < 0.5) {
+        hScore += 15;
+      } else if (hWaveHeight < 1.0) {
+        hScore += 5;
+      } else if (hWaveHeight < 1.5) {
+        hScore -= 10;
+      } else {
+        hScore -= 20;
+      }
+
+      if (hWavePeriod > 8) {
+        hScore += 10;
+      } else if (hWavePeriod < 4) {
+        hScore -= 10;
+      }
+
+      if (hWindSpeedMph < 8) {
+        hScore += 5;
+      }
+
+      if (hGustFactor < 3) {
+        hScore += 10;
+      } else if (hGustFactor > 8) {
+        hScore -= 10;
+      }
+
+      return Math.max(0, Math.min(100, hScore));
+    };
+
+    // Find best time in next 48 hours
+    let bestTime = null;
+    let bestScore = score;
+    let bestIdx = currentIdx;
+    const hoursToCheck = Math.min(48, windData.hourly.time.length - currentIdx);
+
+    for (let i = currentIdx; i < currentIdx + hoursToCheck; i++) {
+      const hourScore = calculatePaddleboardingScore(i);
+      if (hourScore > bestScore) {
+        bestScore = hourScore;
+        bestIdx = i;
+        bestTime = windData.hourly.time[i];
+      }
+    }
+
     // Ensure score is between 0-100
     score = Math.max(0, Math.min(100, score));
 
@@ -139,7 +209,7 @@ export async function GET(req: Request) {
       emoji = "❌";
     }
 
-    return NextResponse.json({
+    const response: any = {
       score: Math.round(score),
       level,
       description,
@@ -153,7 +223,24 @@ export async function GET(req: Request) {
       timestamp: windData.hourly.time[currentIdx],
       unit: "ft",
       windUnit: "mph",
-    });
+    };
+
+    // Add best time if found and different from current
+    if (bestTime && bestIdx !== currentIdx && Math.round(bestScore) > Math.round(score)) {
+      const bestTimeDate = new Date(bestTime);
+      const hoursFromNow = Math.round((bestTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+      
+      response.bestTime = bestTime;
+      response.bestScore = Math.round(bestScore);
+      response.bestTimeFormatted = bestTimeDate.toLocaleTimeString("en-US", { 
+        hour: "numeric", 
+        minute: "2-digit", 
+        hour12: true 
+      });
+      response.hoursFromNow = hoursFromNow;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Paddleboarding conditions API error:", error);
     return NextResponse.json(

@@ -11,7 +11,7 @@ export default function LivePage() {
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">🎥 Live Beach Cams</h2>
+        <h2 className="text-2xl font-bold">🎥 Live Cams</h2>
         <div className="grid gap-6">
           <WebcamEmbed
             title="Key Biscayne Kite Shop Cam"

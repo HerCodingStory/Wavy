@@ -20,8 +20,8 @@ export async function GET(req: Request) {
     
     // First, try to get NOAA salinity data as a baseline
     const noaaUrl = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=salinity&station=${station}&date=latest&units=english&time_zone=lst_ldt&format=json`;
-    
-    try {
+
+  try {
       const noaaRes = await fetch(noaaUrl);
       const noaaData = await noaaRes.json();
       const salinity = noaaData?.data?.[0]?.v;

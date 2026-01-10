@@ -5,6 +5,7 @@ import { useLocation } from "@/contexts/LocationContext";
 import { useWeatherData } from "@/hooks/useWeatherData";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { LoadingWaves } from "@/components/LoadingWaves";
+import { getMoonPhase, formatTime } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { selected, setSelected } = useLocation();
@@ -16,6 +17,7 @@ export default function DashboardPage() {
     wakeboardingConditions,
     snorkelingConditions,
     paddleboardingConditions,
+    sailingConditions,
     loading,
   } = useWeatherData();
 
@@ -23,46 +25,157 @@ export default function DashboardPage() {
 
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
-      {/* Temperature */}
+      {/* Temperature & Weather Metrics */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Temperature</h2>
+        <h2 className="text-2xl font-bold">Weather Metrics</h2>
         {loading ? (
           <LoadingWaves />
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Water Temperature */}
             <Card>
-              <CardHeader title="Current Temperature" />
+              <CardHeader title="Water Temperature" />
               <CardBody>
-                {waterTemp?.error && weather?.error ? (
-                  <p className="text-sm text-ocean/50 italic">
-                    {waterTemp.error || weather.error || "No data"}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {waterTemp?.temp ? (
-                      <div>
-                        <p className="text-3xl font-bold text-ocean">
-                          🌊 {waterTemp.temp}°F
-                        </p>
-                        <p className="text-sm text-ocean/70 mt-1">Water Temperature</p>
-                      </div>
-                    ) : waterTemp?.error ? (
-                      <p className="text-sm text-ocean/50">Water: {waterTemp.error}</p>
-                    ) : null}
-                    {weather?.current?.temperature ? (
-                      <div className={waterTemp?.temp ? "mt-4" : ""}>
-                        <p className="text-3xl font-bold text-ocean">
-                          ☀️ {parseFloat(weather.current.temperature).toFixed(0)}°F
-                        </p>
-                        <p className="text-sm text-ocean/70 mt-1">Air Temperature</p>
-                      </div>
-                    ) : weather?.error ? (
-                      <p className="text-sm text-ocean/50">Air: {weather.error}</p>
-                    ) : null}
+                {waterTemp?.error ? (
+                  <p className="text-sm text-ocean/50 italic">{waterTemp.error}</p>
+                ) : waterTemp?.temp ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      🌊 {waterTemp.temp}°F
+                    </p>
                   </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
                 )}
               </CardBody>
             </Card>
+
+            {/* Air Temperature */}
+            <Card>
+              <CardHeader title="Air Temperature" />
+              <CardBody>
+                {weather?.error ? (
+                  <p className="text-sm text-ocean/50 italic">{weather.error}</p>
+                ) : weather?.current?.temperature ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      ☀️ {parseFloat(weather.current.temperature).toFixed(0)}°F
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+            {/* Sunrise */}
+            <Card>
+              <CardHeader title="Sunrise" />
+              <CardBody>
+                {weather?.today?.sunrise ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      🌅 {formatTime(weather.today.sunrise)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Sunset */}
+            <Card>
+              <CardHeader title="Sunset" />
+              <CardBody>
+                {weather?.today?.sunset ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      🌇 {formatTime(weather.today.sunset)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* UV Index */}
+            <Card>
+              <CardHeader title="UV Index" />
+              <CardBody>
+                {weather?.current?.uv_index !== null && weather?.current?.uv_index !== undefined ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      ☀️ {weather.current.uv_index}
+                    </p>
+                    <p className="text-sm text-ocean/70 mt-1">
+                      {weather.current.uv_index_max ? `Max: ${weather.current.uv_index_max}` : ""}
+                    </p>
+                    <p className="text-xs text-ocean/60 mt-1">
+                      {parseFloat(weather.current.uv_index) < 3 ? "Low" :
+                       parseFloat(weather.current.uv_index) < 6 ? "Moderate" :
+                       parseFloat(weather.current.uv_index) < 8 ? "High" :
+                       parseFloat(weather.current.uv_index) < 11 ? "Very High" : "Extreme"}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Moon Phase */}
+            <Card>
+              <CardHeader title="Moon Phase" />
+              <CardBody>
+                <div>
+                  {(() => {
+                    const moonPhase = getMoonPhase();
+                    return (
+                      <>
+                        <p className="text-4xl font-bold text-ocean mb-1">
+                          {moonPhase.emoji}
+                        </p>
+                        <p className="text-sm text-ocean/70">{moonPhase.name}</p>
+                      </>
+                    );
+                  })()}
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Visibility */}
+            <Card>
+              <CardHeader title="Visibility" />
+              <CardBody>
+                {weather?.current?.visibility ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      👁️ {weather.current.visibility} <span className="text-lg">mi</span>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Humidity */}
+            <Card>
+              <CardHeader title="Humidity" />
+              <CardBody>
+                {weather?.current?.humidity !== null && weather?.current?.humidity !== undefined ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      💧 {weather.current.humidity}%
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
           </div>
         )}
       </section>
@@ -127,7 +240,7 @@ export default function DashboardPage() {
 
       {/* Activity Conditions */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">🏄 Activity Conditions</h2>
+        <h2 className="text-2xl font-bold">🏄 Current Conditions</h2>
         {loading ? null : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Surfing */}
@@ -143,6 +256,12 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-sm text-ocean/70 mt-1">{surfingConditions.level}</p>
                     <p className="text-xs text-ocean/60 mt-1">{surfingConditions.description}</p>
+                    {surfingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {surfingConditions.bestTimeFormatted} 
+                        {surfingConditions.hoursFromNow > 0 && ` (${surfingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ocean/50 italic">No data</p>
@@ -163,6 +282,12 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-sm text-ocean/70 mt-1">{kiteboardingConditions.level}</p>
                     <p className="text-xs text-ocean/60 mt-1">{kiteboardingConditions.description}</p>
+                    {kiteboardingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {kiteboardingConditions.bestTimeFormatted} 
+                        {kiteboardingConditions.hoursFromNow > 0 && ` (${kiteboardingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ocean/50 italic">No data</p>
@@ -183,6 +308,12 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-sm text-ocean/70 mt-1">{wakeboardingConditions.level}</p>
                     <p className="text-xs text-ocean/60 mt-1">{wakeboardingConditions.description}</p>
+                    {wakeboardingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {wakeboardingConditions.bestTimeFormatted} 
+                        {wakeboardingConditions.hoursFromNow > 0 && ` (${wakeboardingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ocean/50 italic">No data</p>
@@ -203,6 +334,12 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-sm text-ocean/70 mt-1">{snorkelingConditions.level}</p>
                     <p className="text-xs text-ocean/60 mt-1">{snorkelingConditions.description}</p>
+                    {snorkelingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {snorkelingConditions.bestTimeFormatted} 
+                        {snorkelingConditions.hoursFromNow > 0 && ` (${snorkelingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ocean/50 italic">No data</p>
@@ -223,6 +360,38 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-sm text-ocean/70 mt-1">{paddleboardingConditions.level}</p>
                     <p className="text-xs text-ocean/60 mt-1">{paddleboardingConditions.description}</p>
+                    {paddleboardingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {paddleboardingConditions.bestTimeFormatted} 
+                        {paddleboardingConditions.hoursFromNow > 0 && ` (${paddleboardingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-ocean/50 italic">No data</p>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Sailing */}
+            <Card>
+              <CardHeader title="Sailing" />
+              <CardBody>
+                {sailingConditions?.error ? (
+                  <p className="text-sm text-ocean/50 italic">{sailingConditions.error}</p>
+                ) : sailingConditions?.score !== undefined ? (
+                  <div>
+                    <p className="text-3xl font-bold text-ocean">
+                      {sailingConditions.emoji} {sailingConditions.score}
+                    </p>
+                    <p className="text-sm text-ocean/70 mt-1">{sailingConditions.level}</p>
+                    <p className="text-xs text-ocean/60 mt-1">{sailingConditions.description}</p>
+                    {sailingConditions?.bestTimeFormatted && (
+                      <p className="text-xs text-coral mt-2 font-medium">
+                        ⏰ Best time: {sailingConditions.bestTimeFormatted} 
+                        {sailingConditions.hoursFromNow > 0 && ` (${sailingConditions.hoursFromNow}h)`}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-ocean/50 italic">No data</p>

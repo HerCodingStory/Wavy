@@ -27,18 +27,28 @@ export async function GET(req: Request) {
       });
     }
 
-    // Get latest available reading
-    const latestIndex = hourly.time.length - 1;
+    // Get current data (find closest time to now)
+    const now = new Date();
+    let currentIdx = hourly.time.length - 1;
+    let minDiff = Math.abs(new Date(hourly.time[currentIdx]).getTime() - now.getTime());
+
+    for (let i = 0; i < hourly.time.length; i++) {
+      const diff = Math.abs(new Date(hourly.time[i]).getTime() - now.getTime());
+      if (diff < minDiff) {
+        minDiff = diff;
+        currentIdx = i;
+      }
+    }
 
     // Convert m/s to mph (1 m/s = 2.23694 mph)
-    const speedMph = hourly.wind_speed_10m[latestIndex] * 2.23694;
-    const gustsMph = hourly.wind_gusts_10m[latestIndex] * 2.23694;
+    const speedMph = hourly.wind_speed_10m[currentIdx] * 2.23694;
+    const gustsMph = hourly.wind_gusts_10m[currentIdx] * 2.23694;
 
     const windData = {
       speed: speedMph,
       gusts: gustsMph,
-      direction: hourly.wind_direction_10m[latestIndex],
-      timestamp: hourly.time[latestIndex],
+      direction: hourly.wind_direction_10m[currentIdx],
+      timestamp: hourly.time[currentIdx],
       source: "Open-Meteo",
       unit: "mph",
     };

@@ -8,6 +8,15 @@
   --color-foam: #FFFFFF; /* white foam */
 }
 
+/* Dark mode color overrides */
+.dark {
+  --color-sand: #1a1a1a; /* dark background */
+  --color-ocean: #E0E0E0; /* light text */
+  --color-wave: #B0B0B0; /* muted text */
+  --color-coral: #FF8C5A; /* keep coral accent */
+  --color-foam: #2a2a2a; /* dark card background */
+}
+
 body {
   background-color: var(--color-sand);
   color: var(--color-ocean);
@@ -15,6 +24,7 @@ body {
   min-height: 100vh;
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Safe area insets for mobile devices */
@@ -40,6 +50,7 @@ h1, h2, h3 {
   box-shadow: 0 4px 8px color-mix(in srgb, var(--color-ocean) 8%, transparent);
   backdrop-filter: blur(12px);
   color: var(--color-ocean);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Accent links */
@@ -50,6 +61,54 @@ a {
 
 a:hover {
   color: var(--color-wave);
+}
+
+/* Fixed Navigation Bar Colors - Don't change with theme */
+.nav-bar-ocean {
+  background-color: #0D3B3B; /* deep teal blue - always stays this color */
+  color: #FFFFFF; /* white text - always stays this color */
+}
+
+.nav-bar-ocean-95 {
+  background-color: rgba(13, 59, 59, 0.95); /* deep teal blue with 95% opacity - always stays this color */
+}
+
+.nav-bar-ocean-text {
+  color: #FFFFFF; /* white text - always stays this color */
+}
+
+.nav-bar-ocean-text-muted {
+  color: rgba(255, 255, 255, 0.7); /* white text with opacity - always stays this color */
+}
+
+/* Lighter ocean color for mobile header div - only on mobile */
+.mobile-header-bg {
+  background-color: #3A8F8F; /* lighter teal blue - only on mobile */
+}
+
+@media (min-width: 768px) {
+  .mobile-header-bg {
+    background-color: transparent; /* transparent on desktop */
+  }
+}
+
+/* White text in header for light mode */
+.header-text-white {
+  color: #FFFFFF; /* white text */
+}
+
+.dark .header-text-white {
+  color: #E0E0E0; /* light text in dark mode */
+}
+
+/* Fixed dropdown text color - Don't change with theme */
+.dropdown-text {
+  color: #0D3B3B !important; /* deep teal blue - always stays this color */
+}
+
+.dropdown-text option {
+  color: #0D3B3B; /* deep teal blue - always stays this color */
+  background-color: #FFFFFF; /* white background - always stays this color */
 }
 
 /* Loading Waves Animation */

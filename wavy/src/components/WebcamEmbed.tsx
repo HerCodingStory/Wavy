@@ -14,7 +14,7 @@ export function WebcamEmbed({ title, src }: WebcamEmbedProps) {
       <iframe
         src={src}
         title={title}
-        className="w-full aspect-[16/9] min-h-[500px]"
+        className="w-full aspect-[16/9] md:min-h-[500px]"
         allow="autoplay; fullscreen"
         allowFullScreen
       />

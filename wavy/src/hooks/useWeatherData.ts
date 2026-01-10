@@ -49,6 +49,7 @@ export function useWeatherData() {
     wakeboardingConditions: weatherData?.wakeboardingConditions || null,
     snorkelingConditions: weatherData?.snorkelingConditions || null,
     paddleboardingConditions: weatherData?.paddleboardingConditions || null,
+    sailingConditions: weatherData?.sailingConditions || null,
     loading,
     error,
   };

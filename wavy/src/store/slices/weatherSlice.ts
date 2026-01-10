@@ -17,6 +17,7 @@ interface WeatherData {
   wakeboardingConditions: any;
   snorkelingConditions: any;
   paddleboardingConditions: any;
+  sailingConditions: any;
 }
 
 interface WeatherState {
@@ -80,6 +81,7 @@ export const fetchWeatherData = createAsyncThunk(
       wakeboardingRes,
       snorkelingRes,
       paddleboardingRes,
+      sailingRes,
     ] = await Promise.all([
       fetch(`/api/wind?lat=${lat}&lon=${lon}`),
       fetch(`/api/waves?lat=${lat}&lon=${lon}`),
@@ -97,6 +99,7 @@ export const fetchWeatherData = createAsyncThunk(
       fetch(`/api/wakeboarding-conditions?lat=${lat}&lon=${lon}`),
       fetch(`/api/snorkeling-conditions?lat=${lat}&lon=${lon}&station=${station}`),
       fetch(`/api/paddleboarding-conditions?lat=${lat}&lon=${lon}`),
+      fetch(`/api/sailing-conditions?lat=${lat}&lon=${lon}`),
     ]);
 
     const weatherData: WeatherData = {
@@ -116,6 +119,7 @@ export const fetchWeatherData = createAsyncThunk(
       wakeboardingConditions: await parseResponse(wakeboardingRes),
       snorkelingConditions: await parseResponse(snorkelingRes),
       paddleboardingConditions: await parseResponse(paddleboardingRes),
+      sailingConditions: await parseResponse(sailingRes),
     };
 
     return { locationId, data: weatherData };
