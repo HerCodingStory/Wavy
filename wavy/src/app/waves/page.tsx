@@ -9,7 +9,12 @@ import { LoadingWaves } from "@/components/LoadingWaves";
 
 export default function WavesPage() {
   const { selected, setSelected } = useLocation();
-  const { waves, swell, waveEnergy, waveConsistency, quality, waterVisibility, tides, loading } = useWeatherData();
+  const { waves, swell, waveEnergy, waveConsistency, quality, waterVisibility, tides, wind, weather, loading } = useWeatherData();
+
+  function getCardinalDirection(degrees: number): string {
+    const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    return directions[Math.round(degrees / 22.5) % 16];
+  }
 
   function formatTime(timeString: string): string {
     try {

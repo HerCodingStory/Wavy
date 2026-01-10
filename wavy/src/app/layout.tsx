@@ -1,7 +1,9 @@
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { ReduxProvider } from "@/components/ReduxProvider";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata: Metadata = {
   title: "WAVY - Miami Weather Conditions",
@@ -28,13 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="bg-sand text-ocean min-h-screen antialiased font-[Inter]">
-        <ReduxProvider>
-          <LocationProvider>
-        {children}
-          </LocationProvider>
-        </ReduxProvider>
+        <ThemeProvider>
+          <ReduxProvider>
+            <LocationProvider>
+              {children}
+            </LocationProvider>
+          </ReduxProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

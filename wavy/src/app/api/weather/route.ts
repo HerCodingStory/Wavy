@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode,cloudcover,precipitation,relativehumidity_2m,pressure_msl,visibility,windspeed_10m,winddirection_10m&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode,cloudcover,precipitation,relativehumidity_2m,pressure_msl,visibility,windspeed_10m,winddirection_10m,windgusts_10m,uv_index&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,uv_index_max&timezone=auto`;
 
     const res = await fetch(url);
     if (!res.ok) {
@@ -93,8 +93,10 @@ export async function GET(req: Request) {
         pressure: c.pressure_msl != null ? c.pressure_msl.toFixed(0) : null,
         visibility: visibilityMi,
         windSpeed: windSpeedMph,
+        windGust: c.windgusts_10m != null ? (c.windgusts_10m * 2.23694).toFixed(1) : null,
         windDirection: c.winddirection_10m,
-        uv_index: c.uv_index,
+        uv_index: c.uv_index != null ? c.uv_index.toFixed(1) : null,
+        uv_index_max: daily.uv_index_max?.[0] != null ? daily.uv_index_max[0].toFixed(1) : null,
       },
       today: {
         maxTemp: daily.temperature_2m_max?.[0] != null ? (daily.temperature_2m_max[0] * 9/5 + 32).toFixed(1) : null,

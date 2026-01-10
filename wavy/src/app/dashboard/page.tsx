@@ -46,7 +46,7 @@ export default function DashboardPage() {
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
       {/* Main Stats Grid */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Current Conditions</h2>
+        <h2 className="text-2xl font-bold">Activity Conditions</h2>
         {loading ? (
           <div className="text-center py-8 text-ocean/60">Loading conditions...</div>
         ) : (

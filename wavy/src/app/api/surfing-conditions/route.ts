@@ -96,6 +96,67 @@ export async function GET(req: Request) {
       score -= 10; // Windy
     }
 
+    // Helper function to calculate surfing score for a given hour
+    const calculateSurfingScore = (idx: number): number => {
+      const hWaveHeightM = waveData.hourly.wave_height[idx];
+      const hWaveHeight = hWaveHeightM * 3.28084;
+      const hWavePeriod = waveData.hourly.wave_period[idx];
+      const hWaveDirection = waveData.hourly.wave_direction[idx];
+      const hWindSpeedMps = windData.hourly.wind_speed_10m[idx];
+      const hWindSpeed = hWindSpeedMps * 2.23694;
+      const hWindDirection = windData.hourly.wind_direction_10m[idx];
+
+      let hScore = 50;
+
+      if (hWaveHeight >= 1.6 && hWaveHeight <= 6.6) {
+        hScore += 25;
+      } else if (hWaveHeight >= 1.0 && hWaveHeight <= 8.2) {
+        hScore += 15;
+      } else if (hWaveHeight < 1.0) {
+        hScore -= 20;
+      } else if (hWaveHeight > 9.8) {
+        hScore -= 15;
+      }
+
+      if (hWavePeriod >= 8 && hWavePeriod <= 15) {
+        hScore += 20;
+      } else if (hWavePeriod >= 6 && hWavePeriod <= 18) {
+        hScore += 10;
+      } else if (hWavePeriod < 6) {
+        hScore -= 15;
+      }
+
+      const hWindToWaveDiff = Math.abs(hWindDirection - hWaveDirection);
+      const hIsOffshore = hWindToWaveDiff > 90 && hWindToWaveDiff < 270;
+
+      if (hWindSpeed < 5) {
+        hScore += 15;
+      } else if (hWindSpeed < 10 && hIsOffshore) {
+        hScore += 10;
+      } else if (hWindSpeed > 20) {
+        hScore -= 20;
+      } else if (hWindSpeed > 15) {
+        hScore -= 10;
+      }
+
+      return Math.max(0, Math.min(100, hScore));
+    };
+
+    // Find best time in next 48 hours
+    let bestTime = null;
+    let bestScore = score;
+    let bestIdx = currentIdx;
+    const hoursToCheck = Math.min(48, waveData.hourly.time.length - currentIdx);
+
+    for (let i = currentIdx; i < currentIdx + hoursToCheck; i++) {
+      const hourScore = calculateSurfingScore(i);
+      if (hourScore > bestScore) {
+        bestScore = hourScore;
+        bestIdx = i;
+        bestTime = waveData.hourly.time[i];
+      }
+    }
+
     // Ensure score is between 0-100
     score = Math.max(0, Math.min(100, score));
 
@@ -126,7 +187,7 @@ export async function GET(req: Request) {
       emoji = "❌";
     }
 
-    return NextResponse.json({
+    const response: any = {
       score: Math.round(score),
       level,
       description,
@@ -139,7 +200,24 @@ export async function GET(req: Request) {
       timestamp: waveData.hourly.time[currentIdx],
       unit: "ft",
       windUnit: "mph",
-    });
+    };
+
+    // Add best time if found and different from current
+    if (bestTime && bestIdx !== currentIdx && Math.round(bestScore) > Math.round(score)) {
+      const bestTimeDate = new Date(bestTime);
+      const hoursFromNow = Math.round((bestTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+      
+      response.bestTime = bestTime;
+      response.bestScore = Math.round(bestScore);
+      response.bestTimeFormatted = bestTimeDate.toLocaleTimeString("en-US", { 
+        hour: "numeric", 
+        minute: "2-digit", 
+        hour12: true 
+      });
+      response.hoursFromNow = hoursFromNow;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Surfing conditions API error:", error);
     return NextResponse.json(

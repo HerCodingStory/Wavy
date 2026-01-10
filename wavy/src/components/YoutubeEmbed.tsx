@@ -14,7 +14,7 @@ export function YouTubeEmbed({ title, videoId }: YouTubeEmbedProps) {
         {title}
       </div>
       <iframe
-        className="w-full aspect-[16/9] min-h-[500px]"
+        className="w-full aspect-[16/9] md:min-h-[500px]"
         src={embedUrl}
         title={title}
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
