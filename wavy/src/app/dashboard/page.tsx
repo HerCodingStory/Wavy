@@ -3,7 +3,10 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "@/contexts/LocationContext";
 import { useWeatherData } from "@/hooks/useWeatherData";
-import { Card, CardBody, CardHeader } from "@/components/Card";
+import { MetricCard } from "@/components/MetricCard";
+import { SportConditionCard } from "@/components/SportConditionCard";
+import { sportIcons } from "@/lib/icons";
+import { Waves, Wind, Navigation, Droplets, Thermometer, Sun } from "lucide-react";
 
 export default function DashboardPage() {
   const { selected, setSelected } = useLocation();
@@ -14,8 +17,7 @@ export default function DashboardPage() {
     weather,
     tides,
     waterTemp,
-    waveEnergy,
-    waveConsistency,
+    waterVisibility,
     surfingConditions,
     kiteboardingConditions,
     wakeboardingConditions,
@@ -42,222 +44,240 @@ export default function DashboardPage() {
     return (celsius * 9) / 5 + 32;
   }
 
+  // Get trend based on tide direction
+  function getTideTrend(isRising: boolean) {
+    return isRising ? ("up" as const) : ("down" as const);
+  }
+
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
-      {/* Main Stats Grid */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Activity Conditions</h2>
-        {loading ? (
-          <div className="text-center py-8 text-ocean/60">Loading conditions...</div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Wave Height */}
-            <Card>
-              <CardHeader title="Wave Height" />
-              <CardBody>
-                <p className="text-3xl font-bold text-ocean">
-                  {waves?.waveHeight ? `${parseFloat(waves.waveHeight).toFixed(1)}m` : "--"}
-                </p>
-                <p className="text-sm text-ocean/70 mt-1">
-                  Period: {waves?.wavePeriod ? `${waves.wavePeriod}s` : "--"}
-                </p>
-                {waves?.surfHeight && (
-                  <p className="text-xs text-ocean/60 mt-1">
-                    Surf: {parseFloat(waves.surfHeight).toFixed(1)}m
-                  </p>
-                )}
-              </CardBody>
-            </Card>
+      <div className="space-y-8 pb-16">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-ocean">Miami Conditions</h1>
+          <p className="text-sm text-ocean/60 font-medium">
+            Real-time ocean and weather data for extreme water sports
+          </p>
+        </div>
 
-            {/* Wind */}
-            <Card>
-              <CardHeader title="Wind" />
-              <CardBody>
-                {wind?.speed ? (
-                  <div>
-                    <p className="text-2xl font-bold text-ocean">
-                      {wind.speed.toFixed(0)} <span className="text-lg">mph</span>
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      Gusts: {wind.gusts?.toFixed(0)} mph
-                    </p>
-                    {wind.direction && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        {getCardinalDirection(wind.direction)} ({wind.direction.toFixed(0)}°)
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">
-                    {wind?.error || "No data"}
-                  </p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Swell */}
-            <Card>
-              <CardHeader title="Swell" />
-              <CardBody>
-                {swell?.primary ? (
-                  <div>
-                    <p className="text-xl font-bold text-ocean">
-                      {swell.primary.height}m @ {swell.primary.period}s
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      {swell.primary.directionCardinal} ({swell.primary.direction.toFixed(0)}°)
-                    </p>
-                    {swell.secondary && parseFloat(swell.secondary.height) > 0 && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        Secondary: {swell.secondary.height}m @ {swell.secondary.period}s
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">
-                    {swell?.error || "No data"}
-                  </p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Tide */}
-            <Card>
-              <CardHeader title="Tide" />
-              <CardBody>
-                {tides?.current ? (
-                  <div>
-                    <p className="text-2xl font-bold text-ocean">
-                      {tides.current.height} <span className="text-lg">ft</span>
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      {tides.current.isRising ? "↗ Rising" : "↘ Falling"}
-                    </p>
-                    {tides.nextHigh && (
-                      <p className="text-xs text-ocean/60 mt-1">
-                        High: {tides.nextHigh.height}ft @ {formatTime(tides.nextHigh.time)}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">
-                    {tides?.error || "No data"}
-                  </p>
-                )}
-              </CardBody>
-            </Card>
+        {/* Weather Metrics Grid */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <h2 className="text-xl font-bold text-ocean">Weather Metrics</h2>
           </div>
-        )}
-      </section>
+          
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-32 bg-ocean/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Wave Height */}
+              <MetricCard
+                icon={Waves}
+                label="Wave Height"
+                value={waves?.waveHeight ? parseFloat(waves.waveHeight) : 0}
+                unit="m"
+                type="bar"
+                max={5}
+                subtitle={waves?.wavePeriod ? `Period: ${waves.wavePeriod}s` : undefined}
+              />
 
-      {/* Activity Conditions */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">🏄 Activity Conditions</h2>
-        {loading ? null : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Surfing */}
-            <Card>
-              <CardHeader title="Surfing" />
-              <CardBody>
-                {surfingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{surfingConditions.error}</p>
-                ) : surfingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {surfingConditions.emoji} {surfingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{surfingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{surfingConditions.description}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Wind Speed */}
+              <MetricCard
+                icon={Wind}
+                label="Wind Speed"
+                value={wind?.speed ? wind.speed : 0}
+                unit="mph"
+                type="bar"
+                max={40}
+                subtitle={
+                  wind?.direction
+                    ? `${getCardinalDirection(wind.direction)} (${wind.direction.toFixed(0)}°)`
+                    : undefined
+                }
+              />
 
-            {/* Kiteboarding */}
-            <Card>
-              <CardHeader title="Kiteboarding" />
-              <CardBody>
-                {kiteboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{kiteboardingConditions.error}</p>
-                ) : kiteboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {kiteboardingConditions.emoji} {kiteboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{kiteboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{kiteboardingConditions.description}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Water Temperature */}
+              <MetricCard
+                icon={Thermometer}
+                label="Water Temp"
+                value={
+                  waterTemp?.temperature
+                    ? celsiusToFahrenheit(parseFloat(waterTemp.temperature)).toFixed(0)
+                    : 0
+                }
+                unit="°F"
+                type="gauge"
+                max={100}
+                color="#0ea5e9"
+              />
 
-            {/* Wakeboarding */}
-            <Card>
-              <CardHeader title="Wakeboarding" />
-              <CardBody>
-                {wakeboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{wakeboardingConditions.error}</p>
-                ) : wakeboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {wakeboardingConditions.emoji} {wakeboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{wakeboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{wakeboardingConditions.description}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Swell */}
+              <MetricCard
+                icon={Navigation}
+                label="Swell"
+                value={swell?.primary ? parseFloat(swell.primary.height) : 0}
+                unit="m"
+                type="bar"
+                max={4}
+                subtitle={
+                  swell?.primary
+                    ? `${swell.primary.directionCardinal} @ ${swell.primary.period}s`
+                    : undefined
+                }
+              />
 
-            {/* Snorkeling */}
-            <Card>
-              <CardHeader title="Snorkeling" />
-              <CardBody>
-                {snorkelingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{snorkelingConditions.error}</p>
-                ) : snorkelingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {snorkelingConditions.emoji} {snorkelingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{snorkelingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{snorkelingConditions.description}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Tide */}
+              <MetricCard
+                icon={Droplets}
+                label="Tide"
+                value={tides?.current ? parseFloat(tides.current.height) : 0}
+                unit="ft"
+                type="gauge"
+                max={6}
+                trend={tides?.current?.isRising ? getTideTrend(tides.current.isRising) : undefined}
+                subtitle={
+                  tides?.current?.isRising ? "Rising" : tides?.current ? "Falling" : undefined
+                }
+              />
 
-            {/* Paddleboarding */}
-            <Card>
-              <CardHeader title="Paddleboarding" />
-              <CardBody>
-                {paddleboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{paddleboardingConditions.error}</p>
-                ) : paddleboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {paddleboardingConditions.emoji} {paddleboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{paddleboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{paddleboardingConditions.description}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Air Temperature */}
+              <MetricCard
+                icon={Sun}
+                label="Air Temp"
+                value={weather?.current?.temperature ? parseFloat(weather.current.temperature) : 0}
+                unit="°F"
+                type="simple"
+                subtitle={
+                  weather?.current?.feelsLike
+                    ? `Feels like ${parseFloat(weather.current.feelsLike).toFixed(0)}°F`
+                    : undefined
+                }
+              />
+
+              {/* Humidity */}
+              <MetricCard
+                icon={Droplets}
+                label="Humidity"
+                value={weather?.current?.humidity ? weather.current.humidity : 0}
+                unit="%"
+                type="bar"
+                max={100}
+              />
+
+              {/* UV Index */}
+              <MetricCard
+                icon={Sun}
+                label="UV Index"
+                value={weather?.current?.uv_index ? parseFloat(weather.current.uv_index) : 0}
+                unit=""
+                type="bar"
+                max={11}
+                color={
+                  weather?.current?.uv_index
+                    ? parseFloat(weather.current.uv_index) >= 8
+                      ? "#ef4444"
+                      : parseFloat(weather.current.uv_index) >= 5
+                      ? "#f59e0b"
+                      : "#10b981"
+                    : undefined
+                }
+              />
+            </div>
+          )}
+        </section>
+
+        {/* Sport Conditions */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <h2 className="text-xl font-bold text-ocean">Activity Conditions</h2>
           </div>
-        )}
-      </section>
+
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-48 bg-ocean/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Surfing */}
+              {surfingConditions?.score !== undefined && !surfingConditions.error && (
+                <SportConditionCard
+                  icon={sportIcons.surfing}
+                  name="Surfing"
+                  score={surfingConditions.score}
+                  level={surfingConditions.level}
+                  description={surfingConditions.description}
+                  bestTimeFormatted={surfingConditions.bestTimeFormatted}
+                  hoursFromNow={surfingConditions.hoursFromNow}
+                />
+              )}
+
+              {/* Kiteboarding */}
+              {kiteboardingConditions?.score !== undefined &&
+                !kiteboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.kiteboarding}
+                    name="Kiteboarding"
+                    score={kiteboardingConditions.score}
+                    level={kiteboardingConditions.level}
+                    description={kiteboardingConditions.description}
+                    bestTimeFormatted={kiteboardingConditions.bestTimeFormatted}
+                    hoursFromNow={kiteboardingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Wakeboarding */}
+              {wakeboardingConditions?.score !== undefined &&
+                !wakeboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.wakeboarding}
+                    name="Wakeboarding"
+                    score={wakeboardingConditions.score}
+                    level={wakeboardingConditions.level}
+                    description={wakeboardingConditions.description}
+                    bestTimeFormatted={wakeboardingConditions.bestTimeFormatted}
+                    hoursFromNow={wakeboardingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Snorkeling */}
+              {snorkelingConditions?.score !== undefined &&
+                !snorkelingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.snorkeling}
+                    name="Snorkeling"
+                    score={snorkelingConditions.score}
+                    level={snorkelingConditions.level}
+                    description={snorkelingConditions.description}
+                    bestTimeFormatted={snorkelingConditions.bestTimeFormatted}
+                    hoursFromNow={snorkelingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Paddleboarding */}
+              {paddleboardingConditions?.score !== undefined &&
+                !paddleboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.paddleboarding}
+                    name="Paddleboarding"
+                    score={paddleboardingConditions.score}
+                    level={paddleboardingConditions.level}
+                    description={paddleboardingConditions.description}
+                    bestTimeFormatted={paddleboardingConditions.bestTimeFormatted}
+                    hoursFromNow={paddleboardingConditions.hoursFromNow}
+                  />
+                )}
+            </div>
+          )}
+        </section>
+      </div>
     </Layout>
   );
 }
-

@@ -18,7 +18,7 @@ export function WindyEmbed({ lat, lon }: { lat: number; lon: number }) {
   const iframeKey = `${lat.toFixed(4)}-${lon.toFixed(4)}`;
   
   return (
-    <div className="rounded-xl overflow-hidden border border-ocean shadow-md h-[calc(100vh-200px)] min-h-[600px]">
+    <div className="rounded-xl overflow-hidden border border-ocean shadow-md h-[400px] md:h-[calc(100vh-200px)] md:min-h-[600px]">
       <iframe
         key={iframeKey}
         ref={iframeRef}

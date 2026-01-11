@@ -90,3 +90,5 @@ function getCardinalShort(degrees: number): string {
   return directions[Math.round(degrees / 22.5) % 16];
 }
 
+
+

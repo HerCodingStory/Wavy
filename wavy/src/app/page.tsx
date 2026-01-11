@@ -3,14 +3,21 @@
 import { Layout } from "@/components/Layout";
 import { useLocation } from "@/contexts/LocationContext";
 import { useWeatherData } from "@/hooks/useWeatherData";
-import { Card, CardBody, CardHeader } from "@/components/Card";
-import { LoadingWaves } from "@/components/LoadingWaves";
+import { MetricCard } from "@/components/MetricCard";
+import { SportConditionCard } from "@/components/SportConditionCard";
+import { sportIcons } from "@/lib/icons";
+import { Waves, Wind, Navigation, Droplets, Thermometer, Sun, Eye, Sunrise, Sunset, Cloud } from "lucide-react";
 import { getMoonPhase, formatTime } from "@/lib/utils";
+import { Card } from "@/components/Card";
 
 export default function DashboardPage() {
   const { selected, setSelected } = useLocation();
   const {
+    wind,
+    waves,
+    swell,
     weather,
+    tides,
     waterTemp,
     surfingConditions,
     kiteboardingConditions,
@@ -21,386 +28,319 @@ export default function DashboardPage() {
     loading,
   } = useWeatherData();
 
+  function getCardinalDirection(degrees: number): string {
+    const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    return directions[Math.round(degrees / 22.5) % 16];
+  }
 
+  function celsiusToFahrenheit(celsius: number): number {
+    return (celsius * 9) / 5 + 32;
+  }
+
+  // Get trend based on tide direction
+  function getTideTrend(isRising: boolean) {
+    return isRising ? ("up" as const) : ("down" as const);
+  }
+
+  // Weather code icons mapping
+  const weatherIcons: Record<number, string> = {
+    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+    45: "🌫️", 48: "🌫️",
+    51: "🌦️", 53: "🌦️", 55: "🌦️",
+    61: "🌧️", 63: "🌧️", 65: "⛈️",
+    71: "❄️", 73: "❄️", 75: "❄️",
+    80: "🌦️", 81: "🌧️", 82: "⛈️",
+    95: "⛈️", 96: "⛈️", 99: "⛈️",
+  };
+
+  const moonPhase = getMoonPhase();
 
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
-      {/* Temperature & Weather Metrics */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Weather Metrics</h2>
-        {loading ? (
-          <LoadingWaves />
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Water Temperature */}
-            <Card>
-              <CardHeader title="Water Temperature" />
-              <CardBody>
-                {waterTemp?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{waterTemp.error}</p>
-                ) : waterTemp?.temp ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      🌊 {waterTemp.temp}°F
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+      <div className="space-y-8 pb-16">
+        {/* Weather Metrics Grid */}
+        <section className="space-y-4">
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-32 bg-ocean/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Water Temperature */}
+              <MetricCard
+                icon={Waves}
+                label="Water Temperature"
+                value={
+                  waterTemp?.temperature
+                    ? celsiusToFahrenheit(parseFloat(waterTemp.temperature)).toFixed(0)
+                    : waterTemp?.temp
+                    ? parseFloat(waterTemp.temp).toFixed(0)
+                    : 0
+                }
+                unit="°F"
+                type="gauge"
+                max={100}
+                color="#0ea5e9"
+              />
 
-            {/* Air Temperature */}
-            <Card>
-              <CardHeader title="Air Temperature" />
-              <CardBody>
-                {weather?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{weather.error}</p>
-                ) : weather?.current?.temperature ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      ☀️ {parseFloat(weather.current.temperature).toFixed(0)}°F
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-            {/* Sunrise */}
-            <Card>
-              <CardHeader title="Sunrise" />
-              <CardBody>
-                {weather?.today?.sunrise ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      🌅 {formatTime(weather.today.sunrise)}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Air Temperature */}
+              <MetricCard
+                icon={Sun}
+                label="Air Temperature"
+                value={weather?.current?.temperature ? parseFloat(weather.current.temperature) : 0}
+                unit="°F"
+                type="simple"
+                subtitle={
+                  weather?.current?.feelsLike
+                    ? `Feels like ${parseFloat(weather.current.feelsLike).toFixed(0)}°F`
+                    : undefined
+                }
+              />
 
-            {/* Sunset */}
-            <Card>
-              <CardHeader title="Sunset" />
-              <CardBody>
-                {weather?.today?.sunset ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      🌇 {formatTime(weather.today.sunset)}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Sunrise */}
+              <MetricCard
+                icon={Sunrise}
+                label="Sunrise"
+                value={weather?.today?.sunrise ? formatTime(weather.today.sunrise) : "--"}
+                unit=""
+                type="simple"
+              />
 
-            {/* UV Index */}
-            <Card>
-              <CardHeader title="UV Index" />
-              <CardBody>
-                {weather?.current?.uv_index !== null && weather?.current?.uv_index !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      ☀️ {weather.current.uv_index}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">
-                      {weather.current.uv_index_max ? `Max: ${weather.current.uv_index_max}` : ""}
-                    </p>
-                    <p className="text-xs text-ocean/60 mt-1">
-                      {parseFloat(weather.current.uv_index) < 3 ? "Low" :
-                       parseFloat(weather.current.uv_index) < 6 ? "Moderate" :
-                       parseFloat(weather.current.uv_index) < 8 ? "High" :
-                       parseFloat(weather.current.uv_index) < 11 ? "Very High" : "Extreme"}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+              {/* Sunset */}
+              <MetricCard
+                icon={Sunset}
+                label="Sunset"
+                value={weather?.today?.sunset ? formatTime(weather.today.sunset) : "--"}
+                unit=""
+                type="simple"
+              />
 
-            {/* Moon Phase */}
-            <Card>
-              <CardHeader title="Moon Phase" />
-              <CardBody>
-                <div>
-                  {(() => {
-                    const moonPhase = getMoonPhase();
-                    return (
-                      <>
-                        <p className="text-4xl font-bold text-ocean mb-1">
-                          {moonPhase.emoji}
-                        </p>
-                        <p className="text-sm text-ocean/70">{moonPhase.name}</p>
-                      </>
-                    );
-                  })()}
-                </div>
-              </CardBody>
-            </Card>
+              {/* UV Index */}
+              <MetricCard
+                icon={Sun}
+                label="UV Index"
+                value={weather?.current?.uv_index ? parseFloat(weather.current.uv_index) : 0}
+                unit=""
+                type="bar"
+                max={11}
+                subtitle={
+                  weather?.current?.uv_index_max
+                    ? `Max: ${weather.current.uv_index_max}`
+                    : undefined
+                }
+                color={
+                  weather?.current?.uv_index
+                    ? parseFloat(weather.current.uv_index) >= 8
+                      ? "#ef4444"
+                      : parseFloat(weather.current.uv_index) >= 5
+                      ? "#f59e0b"
+                      : "#10b981"
+                    : undefined
+                }
+              />
 
-            {/* Visibility */}
-            <Card>
-              <CardHeader title="Visibility" />
-              <CardBody>
-                {weather?.current?.visibility ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      👁️ {weather.current.visibility} <span className="text-lg">mi</span>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Humidity */}
-            <Card>
-              <CardHeader title="Humidity" />
-              <CardBody>
-                {weather?.current?.humidity !== null && weather?.current?.humidity !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      💧 {weather.current.humidity}%
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-          </div>
-        )}
-      </section>
-
-      {/* Weather Forecast */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">7-Day Weather Forecast</h2>
-        {loading ? (
-          <LoadingWaves />
-        ) : weather?.forecast && weather.forecast.length > 0 ? (
-          <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
-            {weather.forecast.map((day: any, idx: number) => {
-              const date = new Date(day.date);
-              const today = new Date();
-              const isToday = date.toDateString() === today.toDateString();
-              
-              const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
-              const dayNum = date.getDate();
-              const month = date.toLocaleDateString("en-US", { month: "short" });
-              
-              // Weather code icons
-              const weatherIcons: Record<number, string> = {
-                0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-                45: "🌫️", 48: "🌫️",
-                51: "🌦️", 53: "🌦️", 55: "🌦️",
-                61: "🌧️", 63: "🌧️", 65: "⛈️",
-                71: "❄️", 73: "❄️", 75: "❄️",
-                80: "🌦️", 81: "🌧️", 82: "⛈️",
-                95: "⛈️", 96: "⛈️", 99: "⛈️",
-              };
-              
-              const icon = weatherIcons[day.weatherCode] || "🌤️";
-              const title = isToday ? "Today" : `${dayName}, ${month} ${dayNum}`;
-              
-              return (
-                <Card key={idx} className={idx >= 3 ? "hidden md:block" : ""}>
-                  <CardHeader title={title} />
-                  <CardBody>
-                    <div className="text-center">
-                      <p className="text-4xl mb-2">{icon}</p>
-                      <p className="text-xl font-bold text-ocean">
-                        {day.maxTemp ? `${day.maxTemp}°` : "--"}
-                      </p>
-                      <p className="text-sm text-ocean/70">
-                        {day.minTemp ? `${day.minTemp}°` : "--"}
-                      </p>
-                      {day.precipitation && parseFloat(day.precipitation) > 0 && (
-                        <p className="text-xs text-ocean/60 mt-1">
-                          💧 {day.precipitation} in
-                        </p>
-                      )}
+              {/* Moon Phase */}
+              <Card className="bg-foam/90 backdrop-blur-sm border border-ocean/10 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-ocean/5">
+                      <Cloud className="w-5 h-5 text-ocean" />
                     </div>
-                  </CardBody>
-                </Card>
-              );
-            })}
+                    <span className="text-sm font-semibold text-ocean/80">Moon Phase</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl">{moonPhase.emoji}</span>
+                  </div>
+                  <p className="text-sm text-ocean/70 font-medium">{moonPhase.name}</p>
+                </div>
+              </Card>
+
+              {/* Visibility */}
+              <MetricCard
+                icon={Eye}
+                label="Visibility"
+                value={weather?.current?.visibility ? parseFloat(weather.current.visibility) : 0}
+                unit="mi"
+                type="bar"
+                max={20}
+              />
+
+              {/* Humidity */}
+              <MetricCard
+                icon={Droplets}
+                label="Humidity"
+                value={weather?.current?.humidity ? weather.current.humidity : 0}
+                unit="%"
+                type="bar"
+                max={100}
+              />
+            </div>
+          )}
+        </section>
+
+        {/* 7-Day Weather Forecast */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <h2 className="text-xl font-bold text-ocean">7-Day Weather Forecast</h2>
           </div>
-        ) : (
-          <p className="text-sm text-ocean/50 italic">No forecast data available</p>
-        )}
-      </section>
 
-      {/* Activity Conditions */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">🏄 Current Conditions</h2>
-        {loading ? null : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Surfing */}
-            <Card>
-              <CardHeader title="Surfing" />
-              <CardBody>
-                {surfingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{surfingConditions.error}</p>
-                ) : surfingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {surfingConditions.emoji} {surfingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{surfingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{surfingConditions.description}</p>
-                    {surfingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {surfingConditions.bestTimeFormatted} 
-                        {surfingConditions.hoursFromNow > 0 && ` (${surfingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+          {loading ? (
+            <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="h-40 bg-ocean/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : weather?.forecast && weather.forecast.length > 0 ? (
+            <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
+              {weather.forecast.map((day: any, idx: number) => {
+                const date = new Date(day.date);
+                const today = new Date();
+                const isToday = date.toDateString() === today.toDateString();
+                
+                const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+                const dayNum = date.getDate();
+                const month = date.toLocaleDateString("en-US", { month: "short" });
+                
+                const icon = weatherIcons[day.weatherCode] || "🌤️";
+                const title = isToday ? "Today" : `${dayName}, ${month} ${dayNum}`;
+                
+                return (
+                  <Card
+                    key={idx}
+                    className={`bg-foam/90 backdrop-blur-sm border border-ocean/10 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 ${idx >= 3 ? "hidden md:block" : ""}`}
+                  >
+                    <div className="text-center">
+                      <h3 className="text-xs font-semibold text-ocean/70 mb-2">{title}</h3>
+                      <div className="text-4xl mb-3">{icon}</div>
+                      <div className="space-y-1">
+                        <p className="text-xl font-bold text-ocean">
+                          {day.maxTemp ? `${day.maxTemp}°` : "--"}
+                        </p>
+                        <p className="text-sm text-ocean/70">
+                          {day.minTemp ? `${day.minTemp}°` : "--"}
+                        </p>
+                        {day.precipitation && parseFloat(day.precipitation) > 0 && (
+                          <p className="text-xs text-ocean/60 mt-2 flex items-center justify-center gap-1">
+                            <Droplets className="w-3 h-3" />
+                            {day.precipitation} in
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-ocean/50 italic">No forecast data available</p>
+          )}
+        </section>
 
-            {/* Kiteboarding */}
-            <Card>
-              <CardHeader title="Kiteboarding" />
-              <CardBody>
-                {kiteboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{kiteboardingConditions.error}</p>
-                ) : kiteboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {kiteboardingConditions.emoji} {kiteboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{kiteboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{kiteboardingConditions.description}</p>
-                    {kiteboardingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {kiteboardingConditions.bestTimeFormatted} 
-                        {kiteboardingConditions.hoursFromNow > 0 && ` (${kiteboardingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Wakeboarding */}
-            <Card>
-              <CardHeader title="Wakeboarding" />
-              <CardBody>
-                {wakeboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{wakeboardingConditions.error}</p>
-                ) : wakeboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {wakeboardingConditions.emoji} {wakeboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{wakeboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{wakeboardingConditions.description}</p>
-                    {wakeboardingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {wakeboardingConditions.bestTimeFormatted} 
-                        {wakeboardingConditions.hoursFromNow > 0 && ` (${wakeboardingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Snorkeling */}
-            <Card>
-              <CardHeader title="Snorkeling" />
-              <CardBody>
-                {snorkelingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{snorkelingConditions.error}</p>
-                ) : snorkelingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {snorkelingConditions.emoji} {snorkelingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{snorkelingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{snorkelingConditions.description}</p>
-                    {snorkelingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {snorkelingConditions.bestTimeFormatted} 
-                        {snorkelingConditions.hoursFromNow > 0 && ` (${snorkelingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Paddleboarding */}
-            <Card>
-              <CardHeader title="Paddleboarding" />
-              <CardBody>
-                {paddleboardingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{paddleboardingConditions.error}</p>
-                ) : paddleboardingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {paddleboardingConditions.emoji} {paddleboardingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{paddleboardingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{paddleboardingConditions.description}</p>
-                    {paddleboardingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {paddleboardingConditions.bestTimeFormatted} 
-                        {paddleboardingConditions.hoursFromNow > 0 && ` (${paddleboardingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
-
-            {/* Sailing */}
-            <Card>
-              <CardHeader title="Sailing" />
-              <CardBody>
-                {sailingConditions?.error ? (
-                  <p className="text-sm text-ocean/50 italic">{sailingConditions.error}</p>
-                ) : sailingConditions?.score !== undefined ? (
-                  <div>
-                    <p className="text-3xl font-bold text-ocean">
-                      {sailingConditions.emoji} {sailingConditions.score}
-                    </p>
-                    <p className="text-sm text-ocean/70 mt-1">{sailingConditions.level}</p>
-                    <p className="text-xs text-ocean/60 mt-1">{sailingConditions.description}</p>
-                    {sailingConditions?.bestTimeFormatted && (
-                      <p className="text-xs text-coral mt-2 font-medium">
-                        ⏰ Best time: {sailingConditions.bestTimeFormatted} 
-                        {sailingConditions.hoursFromNow > 0 && ` (${sailingConditions.hoursFromNow}h)`}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ocean/50 italic">No data</p>
-                )}
-              </CardBody>
-            </Card>
+        {/* Activity Conditions */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <h2 className="text-xl font-bold text-ocean">Activity Conditions</h2>
           </div>
-        )}
-      </section>
+
+          {loading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-ocean/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Surfing */}
+              {surfingConditions?.score !== undefined && !surfingConditions.error && (
+                <SportConditionCard
+                  icon={sportIcons.surfing}
+                  name="Surfing"
+                  score={surfingConditions.score}
+                  level={surfingConditions.level}
+                  description={surfingConditions.description}
+                  bestTimeFormatted={surfingConditions.bestTimeFormatted}
+                  hoursFromNow={surfingConditions.hoursFromNow}
+                />
+              )}
+
+              {/* Kiteboarding */}
+              {kiteboardingConditions?.score !== undefined &&
+                !kiteboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.kiteboarding}
+                    name="Kiteboarding"
+                    score={kiteboardingConditions.score}
+                    level={kiteboardingConditions.level}
+                    description={kiteboardingConditions.description}
+                    bestTimeFormatted={kiteboardingConditions.bestTimeFormatted}
+                    hoursFromNow={kiteboardingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Wakeboarding */}
+              {wakeboardingConditions?.score !== undefined &&
+                !wakeboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.wakeboarding}
+                    name="Wakeboarding"
+                    score={wakeboardingConditions.score}
+                    level={wakeboardingConditions.level}
+                    description={wakeboardingConditions.description}
+                    bestTimeFormatted={wakeboardingConditions.bestTimeFormatted}
+                    hoursFromNow={wakeboardingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Snorkeling */}
+              {snorkelingConditions?.score !== undefined &&
+                !snorkelingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.snorkeling}
+                    name="Snorkeling"
+                    score={snorkelingConditions.score}
+                    level={snorkelingConditions.level}
+                    description={snorkelingConditions.description}
+                    bestTimeFormatted={snorkelingConditions.bestTimeFormatted}
+                    hoursFromNow={snorkelingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Paddleboarding */}
+              {paddleboardingConditions?.score !== undefined &&
+                !paddleboardingConditions.error && (
+                  <SportConditionCard
+                    icon={sportIcons.paddleboarding}
+                    name="Paddleboarding"
+                    score={paddleboardingConditions.score}
+                    level={paddleboardingConditions.level}
+                    description={paddleboardingConditions.description}
+                    bestTimeFormatted={paddleboardingConditions.bestTimeFormatted}
+                    hoursFromNow={paddleboardingConditions.hoursFromNow}
+                  />
+                )}
+
+              {/* Sailing */}
+              {sailingConditions?.score !== undefined && !sailingConditions.error && (
+                <SportConditionCard
+                  icon={sportIcons.sailing}
+                  name="Sailing"
+                  score={sailingConditions.score}
+                  level={sailingConditions.level}
+                  description={sailingConditions.description}
+                  bestTimeFormatted={sailingConditions.bestTimeFormatted}
+                  hoursFromNow={sailingConditions.hoursFromNow}
+                />
+              )}
+            </div>
+          )}
+        </section>
+      </div>
     </Layout>
   );
 }

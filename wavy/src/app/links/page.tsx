@@ -2,7 +2,7 @@
 
 import { Layout } from "@/components/Layout";
 import { useLocation } from "@/contexts/LocationContext";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Video, Cloud } from "lucide-react";
 
 export default function LinksPage() {
   const { selected, setSelected } = useLocation();
@@ -57,7 +57,10 @@ export default function LinksPage() {
     },
   ];
 
-  const renderLinks = (links: Array<{ title: string; url: string }>) => (
+  const renderLinks = (
+    links: Array<{ title: string; url: string }>,
+    icon?: React.ReactNode
+  ) => (
     <div className="space-y-3">
       {links.map((link, index) => (
         <a
@@ -65,11 +68,23 @@ export default function LinksPage() {
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block card p-4 hover:shadow-lg transition-shadow"
+          className="block bg-foam/90 backdrop-blur-sm border border-ocean/10 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group"
         >
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-ocean">{link.title}</span>
-            <ExternalLink size={18} className="text-ocean/60 flex-shrink-0" />
+            <div className="flex items-center gap-3">
+              {icon && (
+                <div className="p-2 rounded-xl bg-ocean/5 group-hover:bg-ocean/10 transition-colors">
+                  {icon}
+                </div>
+              )}
+              <span className="font-semibold text-ocean group-hover:text-coral transition-colors">
+                {link.title}
+              </span>
+            </div>
+            <ExternalLink
+              size={18}
+              className="text-ocean/60 group-hover:text-coral transition-colors flex-shrink-0"
+            />
           </div>
         </a>
       ))}
@@ -78,18 +93,39 @@ export default function LinksPage() {
 
   return (
     <Layout selectedLocation={selected} onLocationChange={setSelected}>
-      <div className="space-y-8">
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">📹 Live Webcams</h2>
-          {renderLinks(webcamLinks)}
+      <div className="space-y-8 pb-16">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-ocean">Resources & Links</h1>
+          <p className="text-sm text-ocean/60 font-medium">
+            Useful links for weather, webcams, and marine forecasts
+          </p>
+        </div>
+
+        {/* Live Webcams */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <div className="flex items-center gap-2">
+              <Video className="w-5 h-5 text-ocean" />
+              <h2 className="text-xl font-bold text-ocean">Live Webcams</h2>
+            </div>
+          </div>
+          {renderLinks(webcamLinks, <Video className="w-4 h-4 text-ocean" />)}
         </section>
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">🌤️ Weather Pages</h2>
-          {renderLinks(weatherLinks)}
+        {/* Weather Pages */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1 rounded-full bg-coral" />
+            <div className="flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-ocean" />
+              <h2 className="text-xl font-bold text-ocean">Weather Pages</h2>
+            </div>
+          </div>
+          {renderLinks(weatherLinks, <Cloud className="w-4 h-4 text-ocean" />)}
         </section>
       </div>
     </Layout>
   );
 }
-

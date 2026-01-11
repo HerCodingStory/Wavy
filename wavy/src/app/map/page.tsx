@@ -1,14 +1,15 @@
 "use client";
 
-"use client";
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useLocation } from "@/contexts/LocationContext";
-import { Card, CardBody, CardHeader } from "@/components/Card";
+import { MetricCard } from "@/components/MetricCard";
+import { SportConditionCard } from "@/components/SportConditionCard";
+import { Card, CardBody } from "@/components/Card";
+import { sportIcons } from "@/lib/icons";
 import { LoadingWaves } from "@/components/LoadingWaves";
 import dynamic from "next/dynamic";
-import { MapPin } from "lucide-react";
+import { MapPin, Waves, Wind, Thermometer, Sun, Navigation, Activity, Eye, Cloud, Gauge, Droplets, Zap } from "lucide-react";
 import type { LatLngExpression } from "leaflet";
 
 // Dynamically import Leaflet map to avoid SSR issues
@@ -171,11 +172,20 @@ export default function MapPage() {
 
   return (
     <Layout selectedLocation={selected} onLocationChange={() => {}}>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-16">
         {/* Map Section */}
         <section className="space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-ocean">Interactive Map</h1>
+            <p className="text-sm text-ocean/60 font-medium">
+              Click on the map to view weather conditions at any location
+            </p>
+          </div>
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">🗺️ Select Location</h2>
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-1 rounded-full bg-coral" />
+              <h2 className="text-xl font-bold text-ocean">Select Location</h2>
+            </div>
             {selectedCoords && (
               <button
                 onClick={() => {
@@ -199,24 +209,22 @@ export default function MapPage() {
               </p>
             )}
             <div className="mt-4 rounded-lg overflow-hidden" style={{ height: "400px", minHeight: "400px" }}>
-              {typeof window !== "undefined" && (
-                <MapContainer
-                  key={mapKey}
-                  center={[lat, lon] as LatLngExpression}
-                  zoom={11}
-                  style={{ height: "100%", width: "100%" }}
-                  className="z-0"
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <MapClickHandler onMapClick={handleMapClick} />
-                  {selectedCoords && (
-                    <Marker position={[selectedCoords.lat, selectedCoords.lon] as LatLngExpression} />
-                  )}
-                </MapContainer>
-              )}
+              <MapContainer
+                key={mapKey}
+                center={[lat, lon] as LatLngExpression}
+                zoom={11}
+                style={{ height: "100%", width: "100%" }}
+                className="z-0"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapClickHandler onMapClick={handleMapClick} />
+                {selectedCoords && (
+                  <Marker position={[selectedCoords.lat, selectedCoords.lon] as LatLngExpression} />
+                )}
+              </MapContainer>
             </div>
           </div>
         </section>
@@ -224,7 +232,6 @@ export default function MapPage() {
         {/* Weather Metrics */}
         {selectedCoords && (
           <section className="space-y-6">
-            <h2 className="text-2xl font-bold">📊 Weather Metrics</h2>
             {loading ? (
               <LoadingWaves />
             ) : error ? (
@@ -237,159 +244,314 @@ export default function MapPage() {
               <>
                 {/* Temperature */}
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader title="Water Temperature" />
-                    <CardBody>
-                      {data.waterTemp?.error ? (
-                        <p className="text-sm text-ocean/50 italic">{data.waterTemp.error}</p>
-                      ) : data.waterTemp?.temp ? (
-                        <p className="text-3xl font-bold text-ocean">🌊 {data.waterTemp.temp}°F</p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.weather?.current?.temperature && !data.weather?.error && (
+                    <MetricCard
+                      icon={Sun}
+                      label="Air Temperature"
+                      value={parseFloat(data.weather.current.temperature)}
+                      unit="°F"
+                      type="simple"
+                      subtitle={
+                        data.weather.current.feelsLike
+                          ? `Feels like ${parseFloat(data.weather.current.feelsLike).toFixed(0)}°F`
+                          : undefined
+                      }
+                    />
+                  )}
 
-                  <Card>
-                    <CardHeader title="Air Temperature" />
-                    <CardBody>
-                      {data.weather?.error ? (
-                        <p className="text-sm text-ocean/50 italic">{data.weather.error}</p>
-                      ) : data.weather?.current?.temperature ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          ☀️ {parseFloat(data.weather.current.temperature).toFixed(0)}°F
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.weather?.current?.humidity !== null && data.weather?.current?.humidity !== undefined && (
+                    <MetricCard
+                      icon={Droplets}
+                      label="Humidity"
+                      value={data.weather.current.humidity}
+                      unit="%"
+                      type="bar"
+                      max={100}
+                    />
+                  )}
                 </div>
 
                 {/* Wind */}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader title="Wind Speed" />
-                    <CardBody>
-                      {data.wind?.error ? (
-                        <p className="text-sm text-ocean/50 italic">{data.wind.error}</p>
-                      ) : data.wind?.speed ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          💨 {data.wind.speed.toFixed(1)} <span className="text-lg">mph</span>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.wind?.speed && !data.wind?.error && (
+                    <MetricCard
+                      icon={Wind}
+                      label="Wind Speed"
+                      value={data.wind.speed}
+                      unit="mph"
+                      type="bar"
+                      max={40}
+                      subtitle={
+                        data.wind.gusts
+                          ? `Gusts: ${data.wind.gusts.toFixed(1)} mph`
+                          : undefined
+                      }
+                    />
+                  )}
 
-                  <Card>
-                    <CardHeader title="Wind Direction" />
-                    <CardBody>
-                      {data.wind?.direction ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          {getCardinalDirection(data.wind.direction)}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.wind?.direction && (
+                    <MetricCard
+                      icon={Activity}
+                      label="Wind Direction"
+                      value={getCardinalDirection(data.wind.direction)}
+                      unit=""
+                      type="simple"
+                      windDirection={data.wind.direction}
+                      subtitle={`${data.wind.direction.toFixed(0)}°`}
+                    />
+                  )}
 
-                  <Card>
-                    <CardHeader title="Wind Gust" />
-                    <CardBody>
-                      {data.wind?.gusts ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          💨 {data.wind.gusts.toFixed(1)} <span className="text-lg">mph</span>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.wind?.gusts && (
+                    <MetricCard
+                      icon={Wind}
+                      label="Wind Gust"
+                      value={data.wind.gusts}
+                      unit="mph"
+                      type="bar"
+                      max={50}
+                    />
+                  )}
                 </div>
 
                 {/* Waves */}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader title="Wave Height" />
-                    <CardBody>
-                      {data.waves?.error ? (
-                        <p className="text-sm text-ocean/50 italic">{data.waves.error}</p>
-                      ) : data.waves?.height ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          🌊 {data.waves.height} <span className="text-lg">ft</span>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.waves?.height && !data.waves?.error && (
+                    <MetricCard
+                      icon={Waves}
+                      label="Wave Height"
+                      value={parseFloat(data.waves.height)}
+                      unit="ft"
+                      type="bar"
+                      max={15}
+                      subtitle={
+                        data.waves.period ? `Period: ${data.waves.period}s` : undefined
+                      }
+                    />
+                  )}
 
-                  <Card>
-                    <CardHeader title="Wave Period" />
-                    <CardBody>
-                      {data.waves?.period ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          ⏱️ {data.waves.period} <span className="text-lg">s</span>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.waves?.period && (
+                    <MetricCard
+                      icon={Gauge}
+                      label="Wave Period"
+                      value={parseFloat(data.waves.period)}
+                      unit="s"
+                      type="simple"
+                    />
+                  )}
 
-                  <Card>
-                    <CardHeader title="Swell Direction" />
-                    <CardBody>
-                      {data.swell?.direction ? (
-                        <p className="text-3xl font-bold text-ocean">
-                          {getCardinalDirection(data.swell.direction)}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-ocean/50 italic">No data</p>
-                      )}
-                    </CardBody>
-                  </Card>
+                  {data.swell?.primary?.height && (
+                    <MetricCard
+                      icon={Navigation}
+                      label="Swell Height"
+                      value={parseFloat(data.swell.primary.height) * 3.28084}
+                      unit="ft"
+                      type="bar"
+                      max={15}
+                      subtitle={
+                        data.swell.primary.directionCardinal && data.swell.primary.period
+                          ? `${data.swell.primary.directionCardinal} @ ${data.swell.primary.period}s`
+                          : undefined
+                      }
+                    />
+                  )}
+
+                  {data.waveEnergy?.energy && !data.waveEnergy?.error && (
+                    <MetricCard
+                      icon={Zap}
+                      label="Wave Energy"
+                      value={parseFloat(data.waveEnergy.energy)}
+                      unit="kJ/m²"
+                      type="bar"
+                      max={200}
+                      subtitle={data.waveEnergy.level}
+                      color={
+                        parseFloat(data.waveEnergy.energy) > 150
+                          ? "#ef4444"
+                          : parseFloat(data.waveEnergy.energy) > 100
+                          ? "#f59e0b"
+                          : "#10b981"
+                      }
+                    />
+                  )}
+
+                  {data.waveConsistency?.score && !data.waveConsistency?.error && (
+                    <MetricCard
+                      icon={Activity}
+                      label="Wave Consistency"
+                      value={data.waveConsistency.score}
+                      unit="%"
+                      type="bar"
+                      max={100}
+                      subtitle={data.waveConsistency.level}
+                    />
+                  )}
+
+                  {data.waterVisibility?.visibility && !data.waterVisibility?.error && (
+                    <MetricCard
+                      icon={Eye}
+                      label="Water Visibility"
+                      value={parseFloat(data.waterVisibility.visibility)}
+                      unit="ft"
+                      type="bar"
+                      max={100}
+                      subtitle={data.waterVisibility.level}
+                      color={
+                        parseFloat(data.waterVisibility.visibility) > 60
+                          ? "#10b981"
+                          : parseFloat(data.waterVisibility.visibility) > 30
+                          ? "#f59e0b"
+                          : "#ef4444"
+                      }
+                    />
+                  )}
+
+                  {data.quality?.status || data.quality?.quality ? (
+                    <MetricCard
+                      icon={Activity}
+                      label="Water Quality"
+                      value={data.quality.status || data.quality.quality || ""}
+                      unit=""
+                      type="simple"
+                      subtitle={data.quality.description}
+                    />
+                  ) : null}
+
+                  {data.tides?.current && !data.tides?.error && (
+                    <MetricCard
+                      icon={Droplets}
+                      label="Tide"
+                      value={parseFloat(data.tides.current.height)}
+                      unit="ft"
+                      type="simple"
+                      subtitle={
+                        data.tides.current?.isRising ? "Rising" : "Falling"
+                      }
+                    />
+                  )}
+                </div>
+
+                {/* Additional Metrics */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {data.air?.aqi !== undefined && !data.air?.error && (
+                    <MetricCard
+                      icon={Cloud}
+                      label="Air Quality"
+                      value={data.air.aqi}
+                      unit=""
+                      type="bar"
+                      max={300}
+                      subtitle={data.air.category || "Unknown"}
+                      color={
+                        data.air.aqi <= 50
+                          ? "#10b981"
+                          : data.air.aqi <= 100
+                          ? "#f59e0b"
+                          : "#ef4444"
+                      }
+                    />
+                  )}
+
+                  {data.weather?.current?.uv_index !== null && data.weather?.current?.uv_index !== undefined && (
+                    <MetricCard
+                      icon={Sun}
+                      label="UV Index"
+                      value={parseFloat(data.weather.current.uv_index)}
+                      unit=""
+                      type="bar"
+                      max={11}
+                      color={
+                        parseFloat(data.weather.current.uv_index) >= 8
+                          ? "#ef4444"
+                          : parseFloat(data.weather.current.uv_index) >= 5
+                          ? "#f59e0b"
+                          : "#10b981"
+                      }
+                    />
+                  )}
+
+                  {data.weather?.current?.visibility && (
+                    <MetricCard
+                      icon={Eye}
+                      label="Visibility"
+                      value={parseFloat(data.weather.current.visibility)}
+                      unit="mi"
+                      type="bar"
+                      max={20}
+                    />
+                  )}
                 </div>
 
                 {/* Activity Conditions */}
                 <div className="space-y-4">
-                  <h3 className="text-xl font-bold">🏄 Activity Conditions</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-1 rounded-full bg-coral" />
+                    <h3 className="text-xl font-bold text-ocean">Activity Conditions</h3>
+                  </div>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { title: "Surfing", data: data.surfingConditions },
-                      { title: "Kiteboarding", data: data.kiteboardingConditions },
-                      { title: "Wakeboarding", data: data.wakeboardingConditions },
-                      { title: "Snorkeling", data: data.snorkelingConditions },
-                      { title: "Paddleboarding", data: data.paddleboardingConditions },
-                    ].map((activity) => (
-                      <Card key={activity.title}>
-                        <CardHeader title={activity.title} />
-                        <CardBody>
-                          {activity.data?.error ? (
-                            <p className="text-sm text-ocean/50 italic">{activity.data.error}</p>
-                          ) : activity.data?.score !== undefined ? (
-                            <div>
-                              <p className="text-3xl font-bold text-ocean">
-                                {activity.data.emoji} {activity.data.score}
-                              </p>
-                              <p className="text-sm text-ocean/70 mt-1">{activity.data.level}</p>
-                              <p className="text-xs text-ocean/60 mt-1">{activity.data.description}</p>
-                              {activity.data?.bestTimeFormatted && (
-                                <p className="text-xs text-coral mt-2 font-medium">
-                                  ⏰ Best time: {activity.data.bestTimeFormatted}
-                                  {activity.data.hoursFromNow > 0 && ` (${activity.data.hoursFromNow}h)`}
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-ocean/50 italic">No data</p>
-                          )}
-                        </CardBody>
-                      </Card>
-                    ))}
+                    {data.surfingConditions?.score !== undefined &&
+                      !data.surfingConditions.error && (
+                        <SportConditionCard
+                          icon={sportIcons.surfing}
+                          name="Surfing"
+                          score={data.surfingConditions.score}
+                          level={data.surfingConditions.level}
+                          description={data.surfingConditions.description}
+                          bestTimeFormatted={data.surfingConditions.bestTimeFormatted}
+                          hoursFromNow={data.surfingConditions.hoursFromNow}
+                        />
+                      )}
+
+                    {data.kiteboardingConditions?.score !== undefined &&
+                      !data.kiteboardingConditions.error && (
+                        <SportConditionCard
+                          icon={sportIcons.kiteboarding}
+                          name="Kiteboarding"
+                          score={data.kiteboardingConditions.score}
+                          level={data.kiteboardingConditions.level}
+                          description={data.kiteboardingConditions.description}
+                          bestTimeFormatted={data.kiteboardingConditions.bestTimeFormatted}
+                          hoursFromNow={data.kiteboardingConditions.hoursFromNow}
+                        />
+                      )}
+
+                    {data.wakeboardingConditions?.score !== undefined &&
+                      !data.wakeboardingConditions.error && (
+                        <SportConditionCard
+                          icon={sportIcons.wakeboarding}
+                          name="Wakeboarding"
+                          score={data.wakeboardingConditions.score}
+                          level={data.wakeboardingConditions.level}
+                          description={data.wakeboardingConditions.description}
+                          bestTimeFormatted={data.wakeboardingConditions.bestTimeFormatted}
+                          hoursFromNow={data.wakeboardingConditions.hoursFromNow}
+                        />
+                      )}
+
+                    {data.snorkelingConditions?.score !== undefined &&
+                      !data.snorkelingConditions.error && (
+                        <SportConditionCard
+                          icon={sportIcons.snorkeling}
+                          name="Snorkeling"
+                          score={data.snorkelingConditions.score}
+                          level={data.snorkelingConditions.level}
+                          description={data.snorkelingConditions.description}
+                          bestTimeFormatted={data.snorkelingConditions.bestTimeFormatted}
+                          hoursFromNow={data.snorkelingConditions.hoursFromNow}
+                        />
+                      )}
+
+                    {data.paddleboardingConditions?.score !== undefined &&
+                      !data.paddleboardingConditions.error && (
+                        <SportConditionCard
+                          icon={sportIcons.paddleboarding}
+                          name="Paddleboarding"
+                          score={data.paddleboardingConditions.score}
+                          level={data.paddleboardingConditions.level}
+                          description={data.paddleboardingConditions.description}
+                          bestTimeFormatted={data.paddleboardingConditions.bestTimeFormatted}
+                          hoursFromNow={data.paddleboardingConditions.hoursFromNow}
+                        />
+                      )}
                   </div>
                 </div>
               </>
